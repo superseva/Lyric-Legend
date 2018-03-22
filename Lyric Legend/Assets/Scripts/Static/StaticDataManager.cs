@@ -2,8 +2,7 @@
 public static class StaticDataManager {
 
 	public static string JSON_FILE_TYPE = "json";
-	public static string WAV_FILE_TYPE = "wav";
-	public static string MP3_FILE_TYPE = "mp3";
+	public static string ASSET_FILE_TYPE = "unity3d";
 
 	private static string selectedJsonName;
 	private static string selectedAudioName;

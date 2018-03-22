@@ -13,7 +13,7 @@ public class BrowserTestCtrl : MonoBehaviour {
 	public float listItemVerticalDistance = 80f;
 
 	private string jsonFilePatern = "*.json";
-	private string songFilePatern = "*.wav";
+	private string assetFilePatern = "*.unity3d";
 	private string songFileType;
 	private GameObject listItem;
 	private string[] fileList;
@@ -22,25 +22,7 @@ public class BrowserTestCtrl : MonoBehaviour {
 
 	void Start ()
 	{
-		#if UNITY_IOS
-		songFileType = StaticDataManager.MP3_FILE_TYPE;
-		songFilePatern = "*." + StaticDataManager.MP3_FILE_TYPE;
-		#endif
-
-		#if UNITY_IPHONE
-		songFileType = StaticDataManager.MP3_FILE_TYPE;
-		songFilePatern = "*." + StaticDataManager.MP3_FILE_TYPE;
-		#endif
-
-		#if UNITY_EDITOR
-		songFileType = StaticDataManager.WAV_FILE_TYPE;
-		songFilePatern = "*." + StaticDataManager.WAV_FILE_TYPE;
-		#endif
-
-		#if UNITY_EDITOR_OSX
-		songFileType = StaticDataManager.WAV_FILE_TYPE;
-		songFilePatern = "*." + StaticDataManager.WAV_FILE_TYPE;
-		#endif
+		
 	}
 
 	private void ClearContentBox()
@@ -65,12 +47,12 @@ public class BrowserTestCtrl : MonoBehaviour {
 	public void BrowseSongs()
 	{
 		ClearContentBox();
-		fileList = Directory.GetFiles(Path.Combine(Application.persistentDataPath,"songs"), songFilePatern);
+		fileList = Directory.GetFiles(Path.Combine(Application.persistentDataPath,"assetbundles"), assetFilePatern);
 		fileListLength = fileList.Length;
 		if(fileListLength==0)
 			return;
 
-		PopulateList(songFileType);
+		PopulateList(StaticDataManager.ASSET_FILE_TYPE);
 	}
 
 	private void PopulateList(string fileType)
@@ -94,6 +76,19 @@ public class BrowserTestCtrl : MonoBehaviour {
 		}else{
 			textUISongSelected.text = file_name;
 		}
+	}
+
+
+	public void OnPressPlay()
+	{
+		if(string.IsNullOrEmpty(textUIJsonSelected.text) || string.IsNullOrEmpty(textUISongSelected.text))
+		{
+			Debug.Log("NOT ALL FILES PRESENT");
+			return;
+		}
+
+		gameObject.SetActive(false);
+
 	}
 
 	void OnEnable(){

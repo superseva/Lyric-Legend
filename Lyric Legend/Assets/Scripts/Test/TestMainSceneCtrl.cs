@@ -11,8 +11,7 @@ public class TestMainSceneCtrl : MonoBehaviour {
 		string pth1 = Path.Combine(Application.persistentDataPath,"assetbundles");
 		string pth2 = Path.Combine(pth1,"girllikeyou.unity3d");
 		Debug.Log("PATH TO LOAD ASSET FROM: " + pth2);
-		StartCoroutine(LoadObject(pth2));
-
+		//StartCoroutine(LoadObject(pth2));
 	}
 
 	public void LoadPlayTestScene()
@@ -36,8 +35,8 @@ public class TestMainSceneCtrl : MonoBehaviour {
 		AssetBundleRequest request = myLoadedAssetBundle.LoadAssetAsync<GameObject>("GirlLikeYou");
 		yield return request;
 
-		GameObject obj = request.asset as GameObject;
-		Instantiate(obj);
+		GameObject pref = request.asset as GameObject;
+		GameObject obj =  Instantiate(pref);
 
 		obj.GetComponent<AudioSource>().Play();
 
