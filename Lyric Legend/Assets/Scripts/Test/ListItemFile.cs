@@ -15,12 +15,12 @@ public class ListItemFile : MonoBehaviour {
 	{
 		filePath = fPath;
 		fileName = Path.GetFileName(fPath);
-		label.text = fileName;
+		label.text = fileName.Split('.')[0];
 		fileType = fType;
 	}
 
 	public void OnClickListItem()
 	{
-		UIEventManager.SelectFileFromList(fileName, fileType);
+		UIEventManager.SelectFileFromList(fileName, fileType, gameObject.name);
 	}
 }
