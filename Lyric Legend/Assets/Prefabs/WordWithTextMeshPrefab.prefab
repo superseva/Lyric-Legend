@@ -118,6 +118,14 @@ MonoBehaviour:
     duration: 0
     index: 0
   textMeshGO: {fileID: 1520200456676056}
+  textMesh: {fileID: 0}
+  showTime: 0
+  hitTime: 0
+  existanceTime: 1
+  startPosition: {x: 0, y: 0, z: 0}
+  endPosition: {x: 0, y: 0, z: 0}
+  hitOffset: 0.2
+  holdDuration: 0
 --- !u!114 &114868361703545200
 MonoBehaviour:
   m_ObjectHideFlags: 1

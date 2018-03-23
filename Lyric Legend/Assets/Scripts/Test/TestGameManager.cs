@@ -60,6 +60,7 @@ public class TestGameManager : MonoBehaviour {
 	void OnPrepareEvent(){
 		Debug.Log( string.Format("PREPARING : {0} file and {1} file", StaticDataManager.SelectedJsonName, StaticDataManager.SelectedAudioName) );
 		gameUI.SetActive(true);
+		listIndex = 0;
 		StartCoroutine(LoadAudioAsset());
 	}
 
@@ -98,9 +99,10 @@ public class TestGameManager : MonoBehaviour {
 
 		GenerateLyricObjects();
 
-		nextShowTime = float.Parse(songData.wordsList[0].time) - timeOnScreen;
-
+		listIndex = 0;
+		nextShowTime = float.Parse(songData.wordsList[listIndex].time) - timeOnScreen;
 		audioSource.timeSamples = Mathf.CeilToInt(sampleRate * (nextShowTime-2));
+
 		audioSource.Play();
 	}
 
@@ -116,12 +118,16 @@ public class TestGameManager : MonoBehaviour {
 		wordsCollection.Clear();
 		GameObject wordGameObject;
 		WordGameObjectCtrl wordCtrl;
+
+		Debug.Log("songData.wordsList.Length " + songData.wordsList.Length);
 		for(int i=0; i<songData.wordsList.Length; i++)
 		{
 			wordGameObject = Instantiate(wordGameObjectPrefab, gameObject.transform);
 			wordCtrl = wordGameObject.GetComponent<WordGameObjectCtrl>();
 			wordCtrl.existanceTime = timeOnScreen;
 			wordCtrl.SetData(songData.wordsList[i]);
+			wordCtrl.startPosition = cam.ScreenToWorldPoint( new Vector3(xPozitions[wordCtrl.wordData.index], Screen.height, 10));
+			wordCtrl.endPosition = cam.ScreenToWorldPoint( new Vector3(xPozitions[wordCtrl.wordData.index], 100, 10));
 			wordsCollection.Add(wordGameObject);
 			wordGameObject.SetActive(false);
 		}
@@ -159,13 +165,17 @@ public class TestGameManager : MonoBehaviour {
 
 		currentAudioTime = audioSource.timeSamples/sampleRate;
 
-		if (currentAudioTime >= nextShowTime)
+		if (currentAudioTime >= nextShowTime && listIndex<wordsCollection.Count)
 		{
 			currentWord = wordsCollection[listIndex];
 			currentWord.SetActive(true);
 
+			Debug.Log(listIndex + " of " + wordsCollection.Count);
+
 			listIndex++;
-			nextShowTime = wordsCollection[listIndex].GetComponent<WordGameObjectCtrl>().showTime;
+			if(listIndex<wordsCollection.Count-1){
+				nextShowTime = wordsCollection[listIndex].GetComponent<WordGameObjectCtrl>().showTime;
+			}
 		}
 
 		//moving
@@ -180,8 +190,9 @@ public class TestGameManager : MonoBehaviour {
 				wordCtrl = gWord.GetComponent<WordGameObjectCtrl>();
 				rangeTime = wordCtrl.hitTime - wordCtrl.showTime;
 				percentTime = (currentAudioTime - wordCtrl.showTime) / rangeTime;
-				newY = distance - (distance * percentTime);
-				gWord.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(xPozitions[wordCtrl.wordData.index], newY, 10));
+				//newY = distance - (distance * percentTime);
+				//gWord.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(xPozitions[wordCtrl.wordData.index], newY, 10));
+				gWord.transform.localPosition = Vector3.Lerp(wordCtrl.startPosition, wordCtrl.endPosition, percentTime);
 				if(currentAudioTime >= wordCtrl.hitTime-hitOffset){
 					wordCtrl.textMesh.color = Color.green;
 				}

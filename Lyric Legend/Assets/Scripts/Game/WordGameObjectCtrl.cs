@@ -13,6 +13,10 @@ public class WordGameObjectCtrl : MonoBehaviour {
 	public float showTime;
 	public float hitTime;
 	public float existanceTime = 1f;
+	public Vector3 startPosition;
+	public Vector3 endPosition;
+	public float hitOffset=0.2f;
+	public float holdDuration = 0;
 
 	void Awake()
 	{
@@ -21,7 +25,7 @@ public class WordGameObjectCtrl : MonoBehaviour {
 
 	private void OnEnable()
 	{
-		Invoke("Destroy", existanceTime + 0.2f);
+		Invoke("Destroy", existanceTime + hitOffset + holdDuration);
 	}
 	private void Destroy()
 	{
@@ -38,6 +42,7 @@ public class WordGameObjectCtrl : MonoBehaviour {
 		textMesh.text = wordData.text;
 		showTime = float.Parse(wordData.time) - existanceTime;
 		hitTime = float.Parse(wordData.time);
+		holdDuration = (float)wordData.duration;
 	}
 	
 	// Update is called once per frame
