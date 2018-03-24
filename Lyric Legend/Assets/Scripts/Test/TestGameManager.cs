@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using LitJson;
+using UnityEngine.UI;
 
 public class TestGameManager : MonoBehaviour {
 
@@ -11,6 +12,8 @@ public class TestGameManager : MonoBehaviour {
 	public GameObject gameUI;
 	public GameObject pickUI;
 	public GameObject wordGameObjectPrefab;
+	public float hitOffset = 0.2f;
+	public GameObject bottomLine;
 
 	private AssetBundle myLoadedAssetBundle;
 	private GameObject audioGameObject;
@@ -26,24 +29,72 @@ public class TestGameManager : MonoBehaviour {
 	private int listIndex = 0;
 	private float nextShowTime = 0;
 	private float nextHitTime = 0;
-	private List<GameObject> wordsCollection = new List<GameObject>();
+	private List<WordGameObjectCtrl>wordsCtrlList = new List<WordGameObjectCtrl>();
 
 	private Camera cam;
-	private float distance;
+	//SCREEN POZITIONS
+	private float distanceOnScreen;
+	private float screenZ = 10;
+	private float startPozitionOnScreen; // screen top 
+	private float endPozitionOnScreen = 100; // some px from the bottom of the screen
 	private float[] xPozitions;
-	private float hitOffset = 0.2f;
+	// WORLD POZITIONS
+	private Vector3[] startPositionsInWorld;
+	private Vector3[] endPositionsOnInWorld;
+	//COLIDER AREAS
+	public GameObject clickArea1;
+	public GameObject clickArea2;
+	public GameObject clickArea3;
+
+	//temp
+	private int clicksCount;
+	public Text clicksCountText;
+
+
+	private WordGameObjectCtrl currentWord;
 
 	// Use this for initialization
 	void Start () {
+		// temporary
+		//Input.simulateMouseWithTouches = true;
+
 		cam = Camera.main;
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
-		distance = Screen.height;
+
+		startPozitionOnScreen = Screen.height;
+
+
+		//Debug.Log( (cam.orthographicSize * 2.0) + " ... " + Screen.height);
+
+		distanceOnScreen = startPozitionOnScreen - endPozitionOnScreen;
+		//Debug.Log("DISTANCE ON SCREEN " + distanceOnScreen);
+
 		float screenQ = Screen.width/3;
 		xPozitions = new float[4];
 		xPozitions[1] = 0;
 		xPozitions[1] = Mathf.Round(screenQ/2);
 		xPozitions[2] = Mathf.Round(Screen.width/2);
 		xPozitions[3] = Mathf.Round(screenQ*3 - screenQ/2);
+
+		startPositionsInWorld = new Vector3[4];
+		startPositionsInWorld[0] = new Vector3();
+		startPositionsInWorld[1] = cam.ScreenToWorldPoint( new Vector3(xPozitions[1], startPozitionOnScreen, screenZ));
+		startPositionsInWorld[2] = cam.ScreenToWorldPoint( new Vector3(xPozitions[2], startPozitionOnScreen, screenZ));
+		startPositionsInWorld[3] = cam.ScreenToWorldPoint( new Vector3(xPozitions[3], startPozitionOnScreen, screenZ));
+
+		endPositionsOnInWorld = new Vector3[4];
+		endPositionsOnInWorld[0] = new Vector3();
+		endPositionsOnInWorld[1] = cam.ScreenToWorldPoint( new Vector3(xPozitions[1], endPozitionOnScreen, screenZ));
+		endPositionsOnInWorld[2] = cam.ScreenToWorldPoint( new Vector3(xPozitions[2], endPozitionOnScreen, screenZ));
+		endPositionsOnInWorld[3] = cam.ScreenToWorldPoint( new Vector3(xPozitions[3], endPozitionOnScreen, screenZ));
+
+		bottomLine.transform.position = endPositionsOnInWorld[2];
+
+		clickArea1.transform.position = endPositionsOnInWorld[1];
+		clickArea2.transform.position = endPositionsOnInWorld[2];
+		clickArea3.transform.position = endPositionsOnInWorld[3];
+
+		//testArea.transform.position = endPositionsOnInWorld[3];
 	}
 
 	void OnEnable()
@@ -58,17 +109,22 @@ public class TestGameManager : MonoBehaviour {
 	}
 
 	void OnPrepareEvent(){
-		Debug.Log( string.Format("PREPARING : {0} file and {1} file", StaticDataManager.SelectedJsonName, StaticDataManager.SelectedAudioName) );
+		//Debug.Log( string.Format("PREPARING : {0} file and {1} file", StaticDataManager.SelectedJsonName, StaticDataManager.SelectedAudioName) );
 		gameUI.SetActive(true);
 		listIndex = 0;
+		nextShowTime = 0;
+		nextHitTime = 0;
 		StartCoroutine(LoadAudioAsset());
+
+		clicksCount = 0;
+		clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
+			
 	}
 
 	IEnumerator LoadAudioAsset(){
 		string folderPath = Path.Combine(Application.persistentDataPath, StaticDataManager.AUDIO_FOLDER);
 		string filePath = Path.Combine(folderPath, StaticDataManager.SelectedAudioName);
-		Debug.Log( string.Format("PATH TO AUDIO FILE : {0}", filePath) );
-
+		//Debug.Log( string.Format("PATH TO AUDIO FILE : {0}", filePath) );
 		AssetBundleCreateRequest bundle = AssetBundle.LoadFromFileAsync(filePath);
 		yield return bundle;
 
@@ -101,8 +157,9 @@ public class TestGameManager : MonoBehaviour {
 
 		listIndex = 0;
 		nextShowTime = float.Parse(songData.wordsList[listIndex].time) - timeOnScreen;
+		nextHitTime = float.Parse(songData.wordsList[listIndex].time);
+		// FORWARD SONG TO A WORD (listIndex)
 		audioSource.timeSamples = Mathf.CeilToInt(sampleRate * (nextShowTime-2));
-
 		audioSource.Play();
 	}
 
@@ -113,22 +170,26 @@ public class TestGameManager : MonoBehaviour {
 		jsonStringFromFile = File.ReadAllText(filePath);
 		songData = JsonMapper.ToObject<SongData>(jsonStringFromFile);
 		timeOnScreen = songData.timeOnScreen;
-		Debug.Log("TIME ON SCREEN " + timeOnScreen);
+		//Debug.Log("TIME ON SCREEN " + timeOnScreen);
 
-		wordsCollection.Clear();
+		wordsCtrlList.Clear();
+
 		GameObject wordGameObject;
 		WordGameObjectCtrl wordCtrl;
-
-		Debug.Log("songData.wordsList.Length " + songData.wordsList.Length);
 		for(int i=0; i<songData.wordsList.Length; i++)
 		{
 			wordGameObject = Instantiate(wordGameObjectPrefab, gameObject.transform);
+			wordGameObject.name = "WordAt_"+songData.wordsList[i].time.ToString();
 			wordCtrl = wordGameObject.GetComponent<WordGameObjectCtrl>();
+			wordCtrl.orderIndex = i;
 			wordCtrl.existanceTime = timeOnScreen;
+			wordCtrl.distanceToTravel = distanceOnScreen;
 			wordCtrl.SetData(songData.wordsList[i]);
-			wordCtrl.startPosition = cam.ScreenToWorldPoint( new Vector3(xPozitions[wordCtrl.wordData.index], Screen.height, 10));
-			wordCtrl.endPosition = cam.ScreenToWorldPoint( new Vector3(xPozitions[wordCtrl.wordData.index], 100, 10));
-			wordsCollection.Add(wordGameObject);
+			wordCtrl.startPosition = startPositionsInWorld[wordCtrl.wordData.index];
+			wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.wordData.index];
+
+			wordGameObject.transform.localPosition = wordCtrl.startPosition;
+			wordsCtrlList.Add(wordCtrl);
 			wordGameObject.SetActive(false);
 		}
 	}
@@ -141,7 +202,6 @@ public class TestGameManager : MonoBehaviour {
 		myLoadedAssetBundle.Unload(true);
 		gameUI.SetActive(false);
 		pickUI.SetActive(true);
-
 		gameObject.SetActive(false);
 	}
 
@@ -153,8 +213,8 @@ public class TestGameManager : MonoBehaviour {
 		}
 	}
 
-
-	private GameObject currentWord;
+	private RaycastHit2D hitInfo;
+		
 	void Update () {
 		
 		if(!audioSource)
@@ -165,41 +225,92 @@ public class TestGameManager : MonoBehaviour {
 
 		currentAudioTime = audioSource.timeSamples/sampleRate;
 
-		if (currentAudioTime >= nextShowTime && listIndex<wordsCollection.Count)
+		if (currentAudioTime >= nextShowTime && listIndex<wordsCtrlList.Count)
 		{
-			currentWord = wordsCollection[listIndex];
-			currentWord.SetActive(true);
-
-			Debug.Log(listIndex + " of " + wordsCollection.Count);
-
+			currentWord = wordsCtrlList[listIndex];
+			currentWord.gameObject.SetActive(true);
 			listIndex++;
-			if(listIndex<wordsCollection.Count-1){
-				nextShowTime = wordsCollection[listIndex].GetComponent<WordGameObjectCtrl>().showTime;
+			if(listIndex<wordsCtrlList.Count-1){
+				nextShowTime = wordsCtrlList[listIndex].showTime;
 			}
 		}
 
 		//moving
-		WordGameObjectCtrl wordCtrl;
 		float rangeTime;
 		float percentTime;
 		float newY;
-		foreach(GameObject gWord in wordsCollection)
+		foreach(WordGameObjectCtrl word in wordsCtrlList)
 		{
-			if (gWord.activeSelf)
+			if (word.gameObject.activeSelf)
 			{
-				wordCtrl = gWord.GetComponent<WordGameObjectCtrl>();
-				rangeTime = wordCtrl.hitTime - wordCtrl.showTime;
-				percentTime = (currentAudioTime - wordCtrl.showTime) / rangeTime;
-				//newY = distance - (distance * percentTime);
-				//gWord.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(xPozitions[wordCtrl.wordData.index], newY, 10));
-				gWord.transform.localPosition = Vector3.Lerp(wordCtrl.startPosition, wordCtrl.endPosition, percentTime);
-				if(currentAudioTime >= wordCtrl.hitTime-hitOffset){
-					wordCtrl.textMesh.color = Color.green;
+				rangeTime = word.hitTime - word.showTime;
+				percentTime = (currentAudioTime - word.showTime) / rangeTime;
+				//newY = (distanceOnScreen - (distanceOnScreen * percentTime)) + endPozitionOnScreen;
+				//word.gameObject.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(xPozitions[word.wordData.index], newY, 10));
+				word.gameObject.transform.localPosition = Vector3.Lerp(word.startPosition, word.endPosition, percentTime);
+				if(currentAudioTime >= word.hitTime){
+					word.textMesh.color = new Color(255,0,255);
 				}
-
+				if(percentTime>=1 && !word.holdGraphicTweening)
+				{
+					word.StartHoldTween();
+				}
 			}
 		}
 
 
+		// pressing the buttons in editor
+		if(Application.isEditor){
+			if(Input.GetMouseButtonDown(0)){
+				Vector2 pos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
+				hitInfo = Physics2D.Raycast(cam.ScreenToWorldPoint(pos), Vector2.zero);
+				if(hitInfo)
+				{
+					if(hitInfo.transform.gameObject.tag=="ClickArea"){
+						Debug.Log("CLICK");
+						CheckForWordHit(hitInfo.transform.gameObject.GetComponent<ClickAreaCtrl>());
+					}
+				}
+			}
+		}
+		else{
+
+			// touch iOS
+			for(int t = 0; t < Input.touchCount; t++){
+				if(Input.GetTouch(t).phase == TouchPhase.Began)
+				{
+					clicksCount ++;
+					clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
+
+					hitInfo = Physics2D.Raycast(cam.ScreenToWorldPoint(Input.GetTouch(t).position), Vector2.zero);
+					if(hitInfo)
+					{
+						if(hitInfo.transform.gameObject.tag=="ClickArea"){
+							Debug.Log("TOUCH");
+							CheckForWordHit(hitInfo.transform.gameObject.GetComponent<ClickAreaCtrl>());
+						}
+					}
+				}
+			}
+
+		}
+
 	}
+
+
+	void CheckForWordHit(ClickAreaCtrl clickedArea)
+	{
+		if(clickedArea.isColliding){
+			if(!clickedArea.wordCtrl.isClicked){
+				Debug.Log("HIT !!! AREA IS COLLIDING WITH WORD " + clickedArea.wordCtrl.orderIndex);
+				clickedArea.wordCtrl.isClicked = true;
+				UIEventManager.ScorePointEvent();
+			}else{
+				Debug.Log("Already Clicked");
+			}
+		}else{
+			Debug.Log("MISS !");
+		}
+	}
+
 }

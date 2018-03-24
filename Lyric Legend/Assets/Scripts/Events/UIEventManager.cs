@@ -29,6 +29,17 @@ public class UIEventManager : MonoBehaviour {
 		}
 	}
 
+
+	// SCORE
+	public delegate void ScorePoint();
+	public static event ScorePoint OnScorePoint;
+	public static void ScorePointEvent()
+	{
+		if(OnScorePoint!=null){
+			OnScorePoint();
+		}
+	}
+
 	// SELECT FILE LIST ITEM
 	public delegate void SelectListItemFile(string fileName, string fileType, string listItemName);
 	public static event SelectListItemFile OnListItemFileSelected;
