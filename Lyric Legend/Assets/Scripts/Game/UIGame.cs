@@ -6,19 +6,18 @@ using UnityEngine.UI;
 public class UIGame : MonoBehaviour {
 
 	public Text scoreTextField;
-	private int score = 0;
 
 	void OnEnable(){
-		score = 0;
-		UIEventManager.OnScorePoint += ScorePoint;
+		UIEventManager.OnAddScore += OnAddScore;
+
+		scoreTextField.text = "SCORE " + ScoreCtrl.currentScore.ToString();
 	}
 
 	void OnDisable(){
-		UIEventManager.OnScorePoint -= ScorePoint;
+		UIEventManager.OnAddScore -= OnAddScore;
 	}
 
-	void ScorePoint(){
-		score = score + 1;
-		scoreTextField.text = "SCORE " + score.ToString();
+	void OnAddScore(){
+		scoreTextField.text = "SCORE " + ScoreCtrl.currentScore.ToString();
 	}
 }

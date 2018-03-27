@@ -69,7 +69,7 @@ public class WordGameObjectCtrl : MonoBehaviour {
 			float sHeight = trail.GetComponent<SpriteRenderer>().sprite.bounds.size.y;
 			float prc = holdDuration/existanceTime;
 			//Debug.Log("prc " + prc);
-			float trailHeight = (distanceToTravel / 16) * prc;
+			float trailHeight = (distanceToTravel / (sHeight*100)) * prc;
 			//float trailHeight = ((Camera.main.orthographicSize * 2.0f) / sHeight) * prc;
 			//Debug.Log(distanceToTravel +" / "+ sHeight + " = " + trailHeight);
 			trail.transform.localScale  = new Vector3(1, trailHeight, 1);
@@ -81,4 +81,5 @@ public class WordGameObjectCtrl : MonoBehaviour {
 		holdGraphicTweening = true;
 		trail.transform.DOScaleY(0, holdDuration);
 	}
+
 }

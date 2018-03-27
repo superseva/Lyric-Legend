@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using LitJson;
 using UnityEngine.UI;
+using DG.Tweening;
 
 public class TestGameManager : MonoBehaviour {
 
@@ -12,8 +13,10 @@ public class TestGameManager : MonoBehaviour {
 	public GameObject gameUI;
 	public GameObject pickUI;
 	public GameObject wordGameObjectPrefab;
+	public GameObject successWordHitFX;
 	public float hitOffset = 0.2f;
 	public GameObject bottomLine;
+	public GameObject gameElements;
 
 	private AssetBundle myLoadedAssetBundle;
 	private GameObject audioGameObject;
@@ -36,39 +39,32 @@ public class TestGameManager : MonoBehaviour {
 	private float distanceOnScreen;
 	private float screenZ = 10;
 	private float startPozitionOnScreen; // screen top 
-	private float endPozitionOnScreen = 100; // some px from the bottom of the screen
+	private float endPozitionOnScreen = 200; // some px from the bottom of the screen
 	private float[] xPozitions;
 	// WORLD POZITIONS
 	private Vector3[] startPositionsInWorld;
 	private Vector3[] endPositionsOnInWorld;
 	//COLIDER AREAS
-	public GameObject clickArea1;
-	public GameObject clickArea2;
-	public GameObject clickArea3;
+	public ClickAreaCtrl[] clickAreas = new ClickAreaCtrl[3];
 
 	//temp
 	private int clicksCount;
 	public Text clicksCountText;
 
-
 	private WordGameObjectCtrl currentWord;
 
-	// Use this for initialization
-	void Start () {
-		// temporary
-		//Input.simulateMouseWithTouches = true;
+	//moving update
+	private float rangeTime;
+	private float percentTime;
+	private float newY;
 
+	void Start () {
+		Input.multiTouchEnabled = true;
 		cam = Camera.main;
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
-
+	
 		startPozitionOnScreen = Screen.height;
-
-
-		//Debug.Log( (cam.orthographicSize * 2.0) + " ... " + Screen.height);
-
 		distanceOnScreen = startPozitionOnScreen - endPozitionOnScreen;
-		//Debug.Log("DISTANCE ON SCREEN " + distanceOnScreen);
-
 		float screenQ = Screen.width/3;
 		xPozitions = new float[4];
 		xPozitions[1] = 0;
@@ -90,11 +86,12 @@ public class TestGameManager : MonoBehaviour {
 
 		bottomLine.transform.position = endPositionsOnInWorld[2];
 
-		clickArea1.transform.position = endPositionsOnInWorld[1];
-		clickArea2.transform.position = endPositionsOnInWorld[2];
-		clickArea3.transform.position = endPositionsOnInWorld[3];
+		clickAreas[0].gameObject.transform.position = endPositionsOnInWorld[1];
+		clickAreas[1].gameObject.transform.position = endPositionsOnInWorld[2];
+		clickAreas[2].gameObject.transform.position = endPositionsOnInWorld[3];
 
-		//testArea.transform.position = endPositionsOnInWorld[3];
+		PoolManager.WarmPool(successWordHitFX, 20);
+
 	}
 
 	void OnEnable()
@@ -110,15 +107,20 @@ public class TestGameManager : MonoBehaviour {
 
 	void OnPrepareEvent(){
 		//Debug.Log( string.Format("PREPARING : {0} file and {1} file", StaticDataManager.SelectedJsonName, StaticDataManager.SelectedAudioName) );
-		gameUI.SetActive(true);
+		ScoreCtrl.currentScore = 0;
 		listIndex = 0;
 		nextShowTime = 0;
 		nextHitTime = 0;
-		StartCoroutine(LoadAudioAsset());
 
+		foreach(ClickAreaCtrl c in clickAreas){
+			c.gameObject.SetActive(true);
+		}
+		gameElements.SetActive(true);
+		gameUI.SetActive(true);
 		clicksCount = 0;
 		clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
-			
+
+		StartCoroutine(LoadAudioAsset());
 	}
 
 	IEnumerator LoadAudioAsset(){
@@ -171,7 +173,6 @@ public class TestGameManager : MonoBehaviour {
 		songData = JsonMapper.ToObject<SongData>(jsonStringFromFile);
 		timeOnScreen = songData.timeOnScreen;
 		//Debug.Log("TIME ON SCREEN " + timeOnScreen);
-
 		wordsCtrlList.Clear();
 
 		GameObject wordGameObject;
@@ -187,7 +188,6 @@ public class TestGameManager : MonoBehaviour {
 			wordCtrl.SetData(songData.wordsList[i]);
 			wordCtrl.startPosition = startPositionsInWorld[wordCtrl.wordData.index];
 			wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.wordData.index];
-
 			wordGameObject.transform.localPosition = wordCtrl.startPosition;
 			wordsCtrlList.Add(wordCtrl);
 			wordGameObject.SetActive(false);
@@ -200,8 +200,12 @@ public class TestGameManager : MonoBehaviour {
 		listIndex = 0;
 		GameObject.Destroy(audioGameObject);
 		myLoadedAssetBundle.Unload(true);
+		foreach(ClickAreaCtrl c in clickAreas){
+			c.gameObject.SetActive(false);
+		}
 		gameUI.SetActive(false);
 		pickUI.SetActive(true);
+		gameElements.SetActive(false);
 		gameObject.SetActive(false);
 	}
 
@@ -213,8 +217,8 @@ public class TestGameManager : MonoBehaviour {
 		}
 	}
 
-	private RaycastHit2D hitInfo;
-		
+
+
 	void Update () {
 		
 		if(!audioSource)
@@ -236,9 +240,7 @@ public class TestGameManager : MonoBehaviour {
 		}
 
 		//moving
-		float rangeTime;
-		float percentTime;
-		float newY;
+
 		foreach(WordGameObjectCtrl word in wordsCtrlList)
 		{
 			if (word.gameObject.activeSelf)
@@ -258,59 +260,85 @@ public class TestGameManager : MonoBehaviour {
 			}
 		}
 
+		CheckTouches();
 
-		// pressing the buttons in editor
-		if(Application.isEditor){
-			if(Input.GetMouseButtonDown(0)){
-				Vector2 pos = new Vector2(Input.mousePosition.x, Input.mousePosition.y);
-				hitInfo = Physics2D.Raycast(cam.ScreenToWorldPoint(pos), Vector2.zero);
-				if(hitInfo)
-				{
-					if(hitInfo.transform.gameObject.tag=="ClickArea"){
-						Debug.Log("CLICK");
-						CheckForWordHit(hitInfo.transform.gameObject.GetComponent<ClickAreaCtrl>());
-					}
-				}
-			}
-		}
-		else{
+	}
 
-			// touch iOS
-			for(int t = 0; t < Input.touchCount; t++){
-				if(Input.GetTouch(t).phase == TouchPhase.Began)
-				{
-					clicksCount ++;
-					clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
 
-					hitInfo = Physics2D.Raycast(cam.ScreenToWorldPoint(Input.GetTouch(t).position), Vector2.zero);
-					if(hitInfo)
+	private ClickAreaCtrl clickAreaCtrl;
+	WordGameObjectCtrl wgCollidingCtrl;
+
+	void CheckTouches(){
+		if(Input.touchCount < 1)
+			return;
+
+		foreach(Touch touch in Input.touches)
+		{
+			if(touch.phase==TouchPhase.Began)
+			{
+				RaycastHit2D hitInfo = Physics2D.Raycast(cam.ScreenToWorldPoint(touch.position), Vector2.zero);
+				if(hitInfo){
+					GameObject recipient = hitInfo.transform.gameObject;
+					if(recipient.tag == "ClickArea")
 					{
-						if(hitInfo.transform.gameObject.tag=="ClickArea"){
-							Debug.Log("TOUCH");
-							CheckForWordHit(hitInfo.transform.gameObject.GetComponent<ClickAreaCtrl>());
+						RegisterClick();
+						clickAreaCtrl = recipient.GetComponent<ClickAreaCtrl>();
+						wgCollidingCtrl = clickAreaCtrl.GetCollidingWord();
+						if(wgCollidingCtrl!=null)
+						{
+							RegisterWordHit(clickAreaCtrl);
+							if(wgCollidingCtrl.wordData.duration>0.0)
+							{
+								clickAreaCtrl.StartHolding(touch.fingerId, (float)wgCollidingCtrl.wordData.duration, currentAudioTime);
+							}
 						}
 					}
 				}
 			}
 
-		}
-
-	}
-
-
-	void CheckForWordHit(ClickAreaCtrl clickedArea)
-	{
-		if(clickedArea.isColliding){
-			if(!clickedArea.wordCtrl.isClicked){
-				Debug.Log("HIT !!! AREA IS COLLIDING WITH WORD " + clickedArea.wordCtrl.orderIndex);
-				clickedArea.wordCtrl.isClicked = true;
-				UIEventManager.ScorePointEvent();
-			}else{
-				Debug.Log("Already Clicked");
+			if(touch.phase == TouchPhase.Ended || touch.phase == TouchPhase.Canceled)
+			{
+				foreach(ClickAreaCtrl caCtrl in clickAreas)
+				{
+					if(touch.fingerId==caCtrl.fingerIdDown)
+					{
+						//Debug.Log("STOP HOLDING " + caCtrl.gameObject.name + " fid =" +caCtrl.fingerIdDown+ " WITH FINGER ID "+ touch.fingerId);
+						float timePressed = currentAudioTime - caCtrl.startHoldTime;
+						//Debug.Log("HODING FOR : " + timePressed + " ["+caCtrl.durationToHold+"]");
+						caCtrl.fingerIdDown = 100;
+						caCtrl.startHoldTime = 0;
+						caCtrl.durationToHold = 0;
+						caCtrl.StopParticles();
+					}
+				}
 			}
-		}else{
-			Debug.Log("MISS !");
+
+			if(touch.phase == TouchPhase.Moved || touch.phase == TouchPhase.Stationary){
+				foreach(ClickAreaCtrl caCtrl in clickAreas)
+				{
+					if(caCtrl.fingerIdDown!=100 && caCtrl.durationToHold!=0){
+						ScoreCtrl.AddHoldPoints(float.Parse(caCtrl.wordCtrl.wordData.time), caCtrl.startHoldTime, caCtrl.durationToHold, currentAudioTime);
+					}
+				}
+			}
+
 		}
 	}
 
+	void RegisterClick()
+	{
+		clicksCount ++;
+		clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
+	}
+
+	GameObject hitFX;
+	void RegisterWordHit(ClickAreaCtrl cArea){
+		hitFX = PoolManager.SpawnObject(successWordHitFX);
+		hitFX.transform.position = cArea.gameObject.transform.position;
+		ScoreCtrl.AddScore();
+	}
+
+	void RegisterHoldingWord(ClickAreaCtrl cAreaCtrl){
+		
+	}
 }
