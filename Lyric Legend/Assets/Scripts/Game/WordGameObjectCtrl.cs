@@ -55,11 +55,11 @@ public class WordGameObjectCtrl : MonoBehaviour {
 		CancelInvoke();
 	}
 
-	public void SetData(WordData wd){
+    public void SetData(WordData wd, float mp3Delay){
 		wordData = wd;
 		textMesh.text = wordData.text;
-		showTime = float.Parse(wordData.time) - existanceTime;
-		hitTime = float.Parse(wordData.time);
+        showTime = (float.Parse(wordData.time) - existanceTime) + mp3Delay;
+        hitTime = float.Parse(wordData.time) + mp3Delay;
 		holdDuration = (float)wordData.duration;
 		//Debug.Log("duration: " + holdDuration);
 		if(holdDuration>0){

@@ -17,6 +17,7 @@ public class TestGameManager : MonoBehaviour {
 	public float hitOffset = 0.2f;
 	public GameObject bottomLine;
 	public GameObject gameElements;
+    public GameObject stageVisual;
 
 	private AssetBundle myLoadedAssetBundle;
 	private GameObject audioGameObject;
@@ -36,10 +37,15 @@ public class TestGameManager : MonoBehaviour {
 
 	private Camera cam;
 	//SCREEN POZITIONS
+    private float LyricStartPointInPercent = 1;
+    private float LyricEndPointInPercent = 0.1f;
+    private float StageVisualPositionInPercent = 0.5f;
+    private Vector3 stageVisualPosition = Vector3.zero;
+
 	private float distanceOnScreen;
 	private float screenZ = 10;
 	private float startPozitionOnScreen; // screen top 
-	private float endPozitionOnScreen = 200; // some px from the bottom of the screen
+	public float endPozitionOnScreen = 100; // some px from the bottom of the screen
 	private float[] xPozitions;
 	// WORLD POZITIONS
 	private Vector3[] startPositionsInWorld;
@@ -58,12 +64,19 @@ public class TestGameManager : MonoBehaviour {
 	private float percentTime;
 	private float newY;
 
+    private JsonData configData;
+
 	void Start () {
+
+        Configurate();
+
 		Input.multiTouchEnabled = true;
 		cam = Camera.main;
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 	
-		startPozitionOnScreen = Screen.height;
+        //startPozitionOnScreen = Screen.height;
+        startPozitionOnScreen = Mathf.Round(Screen.height * LyricStartPointInPercent);
+        endPozitionOnScreen = Mathf.Round(Screen.height * LyricEndPointInPercent);
 		distanceOnScreen = startPozitionOnScreen - endPozitionOnScreen;
 		float screenQ = Screen.width/3;
 		xPozitions = new float[4];
@@ -89,6 +102,9 @@ public class TestGameManager : MonoBehaviour {
 		clickAreas[0].gameObject.transform.position = endPositionsOnInWorld[1];
 		clickAreas[1].gameObject.transform.position = endPositionsOnInWorld[2];
 		clickAreas[2].gameObject.transform.position = endPositionsOnInWorld[3];
+
+        stageVisualPosition = cam.ScreenToWorldPoint( new Vector3(Mathf.Round(Screen.width * 0.5f) , Mathf.Round(Screen.height * StageVisualPositionInPercent), screenZ));
+        stageVisual.transform.position = stageVisualPosition;
 
 		PoolManager.WarmPool(successWordHitFX, 20);
 
@@ -122,6 +138,21 @@ public class TestGameManager : MonoBehaviour {
 
 		StartCoroutine(LoadAudioAsset());
 	}
+
+    void Configurate(){
+        string path = Path.Combine(Application.persistentDataPath, "config.json");
+        if (!File.Exists(path))
+        {
+            Debug.Log("NO CONFIG");
+            return;
+        }
+
+        configData = JsonMapper.ToObject<JsonData>(File.ReadAllText(path));
+        //Debug.Log("LyricStartPointFromScreenBottomInPercent = " + configData["LyricStartPointFromScreenBottomInPercent"]);
+        LyricStartPointInPercent = (float)configData["LyricStartPointInPercent"];
+        LyricEndPointInPercent = (float)configData["LyricEndPointInPercent"];
+        StageVisualPositionInPercent = (float)configData["StageVisualPositionInPercent"];
+    }
 
 	IEnumerator LoadAudioAsset(){
 		string folderPath = Path.Combine(Application.persistentDataPath, StaticDataManager.AUDIO_FOLDER);
@@ -185,7 +216,7 @@ public class TestGameManager : MonoBehaviour {
 			wordCtrl.orderIndex = i;
 			wordCtrl.existanceTime = timeOnScreen;
 			wordCtrl.distanceToTravel = distanceOnScreen;
-			wordCtrl.SetData(songData.wordsList[i]);
+            wordCtrl.SetData(songData.wordsList[i], songData.mp3dealy);
 			wordCtrl.startPosition = startPositionsInWorld[wordCtrl.wordData.index];
 			wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.wordData.index];
 			wordGameObject.transform.localPosition = wordCtrl.startPosition;
@@ -317,7 +348,7 @@ public class TestGameManager : MonoBehaviour {
 				foreach(ClickAreaCtrl caCtrl in clickAreas)
 				{
 					if(caCtrl.fingerIdDown!=100 && caCtrl.durationToHold!=0){
-						ScoreCtrl.AddHoldPoints(float.Parse(caCtrl.wordCtrl.wordData.time), caCtrl.startHoldTime, caCtrl.durationToHold, currentAudioTime);
+                        ScoreCtrl.AddHoldPoints(caCtrl.wordCtrl.hitTime, caCtrl.startHoldTime, caCtrl.durationToHold, currentAudioTime);
 					}
 				}
 			}

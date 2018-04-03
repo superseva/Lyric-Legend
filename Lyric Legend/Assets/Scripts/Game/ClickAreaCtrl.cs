@@ -80,6 +80,7 @@ public class ClickAreaCtrl : MonoBehaviour {
 	}
 
 	public void StopParticles(){
-		particlesFx.gameObject.SetActive(false);
+        if(particlesFx!=null)
+		    particlesFx.gameObject.SetActive(false);
 	}
 }
