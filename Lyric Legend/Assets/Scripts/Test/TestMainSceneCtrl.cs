@@ -6,6 +6,11 @@ using System.IO;
 
 public class TestMainSceneCtrl : MonoBehaviour {
 
+
+	private void Awake()
+	{
+        Application.targetFrameRate = 60;
+	}
 	// Use this for initialization
 	void Start () {
 		string pth1 = Path.Combine(Application.persistentDataPath,"assetbundles");

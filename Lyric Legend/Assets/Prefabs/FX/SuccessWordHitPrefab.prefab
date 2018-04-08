@@ -70,6 +70,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b3149587f07944f2bbc64839af2e0742, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  burstAnim: {fileID: 7400000, guid: 3a1ede5e50d8b4dab9b4c4caa32b9f41, type: 2}
+  idleAnim: {fileID: 7400000, guid: 895c8046e919b484c913505579846296, type: 2}
 --- !u!212 &212064217174779360
 SpriteRenderer:
   m_ObjectHideFlags: 1

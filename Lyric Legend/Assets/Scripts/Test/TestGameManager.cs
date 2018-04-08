@@ -4,6 +4,7 @@ using System.IO;
 using UnityEngine;
 using LitJson;
 using UnityEngine.UI;
+using UnityEngine.Networking;
 using DG.Tweening;
 
 public class TestGameManager : MonoBehaviour {
@@ -19,6 +20,7 @@ public class TestGameManager : MonoBehaviour {
 	public GameObject gameElements;
     public GameObject stageVisual;
 
+    private AudioPeer audioPeer;
 	private AssetBundle myLoadedAssetBundle;
 	private GameObject audioGameObject;
 	private AudioSource audioSource;
@@ -62,9 +64,12 @@ public class TestGameManager : MonoBehaviour {
 	//moving update
 	private float rangeTime;
 	private float percentTime;
+
 	private float newY;
 
     private JsonData configData;
+
+    private string manifestPath = "https://firebasestorage.googleapis.com/v0/b/karaokehero-b35cc.appspot.com/o/AssetBundles?alt=media&token=3103cdd8-6792-4efc-aa21-029e3247512d";
 
 	void Start () {
 
@@ -108,6 +113,7 @@ public class TestGameManager : MonoBehaviour {
 
 		PoolManager.WarmPool(successWordHitFX, 20);
 
+        audioPeer = GetComponent<AudioPeer>();
 	}
 
 	void OnEnable()
@@ -180,12 +186,97 @@ public class TestGameManager : MonoBehaviour {
 		OnAudioPrefabLoaded();
 	}
 
+    /*
+    IEnumerator LoadAudioAsset(){
+        UnityWebRequest uwr = UnityWebRequest.GetAssetBundle(manifestPath);
+
+        yield return uwr.SendWebRequest();
+
+        if (uwr.isNetworkError || uwr.isHttpError)
+        {
+            Debug.Log(uwr.error);
+            yield break;
+        }
+
+        AssetBundle manifesBundle = DownloadHandlerAssetBundle.GetContent(uwr);
+        AssetBundleManifest manifest = manifesBundle.LoadAsset<AssetBundleManifest>("AssetBundleManifest");
+            
+        if(manifest==null){
+            Debug.Log("NO MANIFEST");
+        }
+        yield return null;
+
+
+
+
+        //Download the bundle
+        string uri = "https://firebasestorage.googleapis.com/v0/b/karaokehero-b35cc.appspot.com/o/girllikeyou.unity3d?alt=media&token=8bf4ada8-57f9-47af-abdb-3076e9ec62eb";
+        Hash128 hash = manifest.GetAssetBundleHash("girllikeyou.unity3d");
+        UnityWebRequest request = UnityWebRequest.GetAssetBundle(uri, 3, 0);
+        yield return request.SendWebRequest();
+        AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(request);
+
+        List<Hash128> listOfCachedVersions = new List<Hash128>();
+        Caching.GetCachedVersions("girllikeyou.unity3d", listOfCachedVersions);
+        Debug.Log("NUM OF CACHES: " + listOfCachedVersions.Count);
+
+        foreach(Hash128 h in  listOfCachedVersions){
+            Debug.Log("HASH : " + h);
+        }
+
+        //Caching.ClearCache();
+        //Cache lastOne = Caching.GetCacheAt(listOfCachedVersions.Count-1);
+        //Cache firstOne = Caching.GetCacheAt(0);
+        //Caching.MoveCacheBefore(lastOne, firstOne);
+        //Caching.ClearOtherCachedVersions("", hash);
+    }
+    */
+
+    /*
+    IEnumerator LoadAudioAsset()
+    {
+
+        string filePath = "https://firebasestorage.googleapis.com/v0/b/karaokehero-b35cc.appspot.com/o/girllikeyou.unity3d?alt=media&token=8bf4ada8-57f9-47af-abdb-3076e9ec62eb";
+        //Debug.Log( string.Format("PATH TO AUDIO FILE : {0}", filePath) );
+        UnityWebRequest uwr = UnityWebRequest.GetAssetBundle(filePath, 2, 0);
+        uwr.SendWebRequest();
+        while(!uwr.isDone){
+            Debug.Log("% "+ uwr.downloadProgress);
+            yield return null;
+        }
+        if (uwr.isNetworkError || uwr.isHttpError)
+        {
+            Debug.Log(uwr.error);
+            yield break;
+        }
+        Debug.Log("DOwnloading " + filePath);
+        AssetBundle bundle = DownloadHandlerAssetBundle.GetContent(uwr);
+        yield return null;
+        //List<Hash128> listOfCachedVersions = new List<Hash128>();
+        //Caching.GetCachedVersions(bundle.name, listOfCachedVersions);
+        //Debug.Log("NUM OF CACHES: " + listOfCachedVersions.Count);
+        //foreach(Hash128 h in  listOfCachedVersions){
+        //    Debug.Log("HASH : " + h);
+        //}
+        string assetName = StaticDataManager.SelectedAudioName.Split('.')[0];
+        Debug.Log("ASSET NAME " + assetName);
+        AssetBundleRequest request = bundle.LoadAssetAsync<GameObject>(assetName);
+        yield return request;
+
+          if(request.asset==null){
+              Debug.Log("NO ASSET FOUND IN BUNDLE");
+              yield break;
+          }
+          audioPrefab = request.asset as GameObject;
+          OnAudioPrefabLoaded();
+    }*/
+
 	void OnAudioPrefabLoaded()
 	{
 		audioGameObject = Instantiate(audioPrefab);
 		audioSource = audioGameObject.GetComponent<AudioSource>();
 		audioClip = audioSource.clip;
-
+        audioPeer.audioSource = audioSource;
 		GenerateLyricObjects();
 
 		listIndex = 0;

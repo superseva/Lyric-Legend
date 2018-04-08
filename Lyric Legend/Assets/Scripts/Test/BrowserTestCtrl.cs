@@ -29,6 +29,7 @@ public class BrowserTestCtrl : MonoBehaviour {
 	void Start ()
 	{
 		gameManager.SetActive(false);
+        //BrowseCache();
 	}
 
 	private void ClearContentBox()
@@ -38,6 +39,16 @@ public class BrowserTestCtrl : MonoBehaviour {
 			GameObject.Destroy(child.gameObject);
 		}
 	}
+
+    public void BrowseCache(){
+        fileList = Directory.GetFiles(Application.temporaryCachePath);
+        Debug.Log(fileList.Length);
+        for (int i = 0; i < fileList.Length; i++)
+        {
+            Debug.Log("Cached : " + fileList[i]);
+        }
+
+    }
 	
 	public void BrowseJSON()
 	{
