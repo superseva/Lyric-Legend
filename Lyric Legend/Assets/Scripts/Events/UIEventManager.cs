@@ -24,13 +24,36 @@ public class UIEventManager : MonoBehaviour {
 
 
 	// SCORE
-	public delegate void ScorePoint();
-	public static event ScorePoint OnScorePoint;
-	public static void ScorePointEvent(){
-		if(OnScorePoint!=null){
-			OnScorePoint();
+	public delegate void ScoreChanged();
+    public static event ScoreChanged OnScoreChanged;
+    public static void ScoreChangedEvent(){
+        if(OnScoreChanged!=null){
+            OnScoreChanged();
 		}
 	}
+
+    //STREAK
+    public delegate void StreakChanged();
+    public static event StreakChanged OnStreakChanged;
+    public static void StreakChangedEvent()
+    {
+        if (OnStreakChanged != null)
+        {
+            OnStreakChanged();
+        }
+    }
+
+    public delegate void StreakReset();
+    public static event StreakReset OnStreakReset;
+    public static void StreakResetEvent()
+    {
+        if (OnStreakReset != null)
+        {
+            OnStreakReset();
+        }
+    }
+
+
 
 	// SELECT FILE LIST ITEM
 	public delegate void SelectListItemFile(string fileName, string fileType, string listItemName);
@@ -38,15 +61,6 @@ public class UIEventManager : MonoBehaviour {
 	public static void SelectFileFromList(string fileName, string fileType, string listItemName){
 		if(OnListItemFileSelected!=null){
 			OnListItemFileSelected(fileName, fileType, listItemName);
-		}
-	}
-
-	/* SCORE */
-	public delegate void AddScore();
-	public static event AddScore OnAddScore;
-	public static void AddScoreEvent(){
-		if(OnAddScore!=null){
-			OnAddScore();
 		}
 	}
 

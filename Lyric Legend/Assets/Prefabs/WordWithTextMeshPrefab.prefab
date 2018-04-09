@@ -220,7 +220,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   textMeshGO: {fileID: 1520200456676056}
-  hitOffset: 0.2
+  hitOffset: 0.4
   trail: {fileID: 1700808437523432}
   textMesh: {fileID: 0}
   wordData:

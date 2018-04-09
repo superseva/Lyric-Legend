@@ -6,18 +6,25 @@ using UnityEngine.UI;
 public class UIGame : MonoBehaviour {
 
 	public Text scoreTextField;
+    public Text streakField;
 
 	void OnEnable(){
-		UIEventManager.OnAddScore += OnAddScore;
-
+        UIEventManager.OnScoreChanged += OnScoreChanged;
+        UIEventManager.OnStreakChanged += OnStreakChanged;
 		scoreTextField.text = "SCORE " + ScoreCtrl.currentScore.ToString();
 	}
 
 	void OnDisable(){
-		UIEventManager.OnAddScore -= OnAddScore;
+        UIEventManager.OnScoreChanged -= OnScoreChanged;
+        UIEventManager.OnStreakChanged -= OnStreakChanged;
 	}
 
-	void OnAddScore(){
-		scoreTextField.text = "SCORE " + ScoreCtrl.currentScore.ToString();
+	void OnScoreChanged(){
+		scoreTextField.text = "SCORE " + ScoreCtrl.currentScore.ToString("#,#");
 	}
+
+    void OnStreakChanged(){
+        //Debug.Log("STREAK =" + ScoreCtrl.streak);
+        streakField.text = "STREAK " + ScoreCtrl.streak.ToString();
+    }
 }

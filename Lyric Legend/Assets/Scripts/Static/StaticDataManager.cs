@@ -10,6 +10,8 @@ public static class StaticDataManager {
 	private static string selectedJsonName;
 	private static string selectedAudioName;
 
+    public static int difficulty = 0;
+
 	public static string SelectedJsonName{
 		get 
 		{

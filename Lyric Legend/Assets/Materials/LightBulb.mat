@@ -7,7 +7,7 @@ Material:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_Name: LightBulb
-  m_Shader: {fileID: 200, guid: 0000000000000000f000000000000000, type: 0}
+  m_Shader: {fileID: 4800000, guid: 5632cc5a5245a4e8c84a6fcaee81b782, type: 3}
   m_ShaderKeywords: ETC1_EXTERNAL_ALPHA _EMISSION
   m_LightmapFlags: 0
   m_EnableInstancingVariants: 0
@@ -128,4 +128,4 @@ Material:
     - _Flip: {r: 1, g: 1, b: 1, a: 1}
     - _RendererColor: {r: 1, g: 1, b: 1, a: 1}
     - _SoftParticleFadeParams: {r: 0, g: 0, b: 0, a: 0}
-    - _TintColor: {r: 0.88235295, g: 0, b: 0.88235295, a: 0.5019608}
+    - _TintColor: {r: 1, g: 1, b: 1, a: 0.5019608}

@@ -18,7 +18,7 @@ public class WordGameObjectCtrl : MonoBehaviour {
 	[HideInInspector]
 	public float hitTime;
 	[HideInInspector]
-	public float existanceTime = 1f;
+    public float timeOnScreen = 1f;
 	[HideInInspector]
 	public Vector3 startPosition;
 	[HideInInspector]
@@ -30,9 +30,13 @@ public class WordGameObjectCtrl : MonoBehaviour {
 	[HideInInspector]
 	public bool holdGraphicTweening = false;
 	[HideInInspector]
-	public int orderIndex = 0;
+	public int orderIndex = 0; // used for keeping streaks increment. starts from 1
 	[HideInInspector]
 	public bool isClicked = false;
+    [HideInInspector]
+    public int xPositionIndex;
+    [HideInInspector]
+    public bool isFake = false;
 
 	void Awake()
 	{
@@ -41,13 +45,19 @@ public class WordGameObjectCtrl : MonoBehaviour {
 		textMesh.raycastTarget = false;
 	}
 
-	private void OnEnable()
-	{
-		Invoke("Destroy", existanceTime + hitOffset + holdDuration);
+    private void OnEnable()
+    {
+        if (holdDuration <= 0) {
+            Invoke("Destroy", timeOnScreen + hitOffset);
+        }else{
+            Invoke("Destroy", timeOnScreen + holdDuration);
+        }
 	}
 	private void Destroy()
 	{
-		gameObject.SetActive(false);
+        if (!isClicked)
+            ScoreCtrl.WordMiss();
+        gameObject.SetActive(false);
 	}
 
 	private void OnDestroy()
@@ -58,7 +68,7 @@ public class WordGameObjectCtrl : MonoBehaviour {
     public void SetData(WordData wd, float mp3Delay){
 		wordData = wd;
 		textMesh.text = wordData.text;
-        showTime = (float.Parse(wordData.time) - existanceTime) + mp3Delay;
+        showTime = (float.Parse(wordData.time) - timeOnScreen) + mp3Delay;
         hitTime = float.Parse(wordData.time) + mp3Delay;
 		holdDuration = (float)wordData.duration;
 		//Debug.Log("duration: " + holdDuration);
@@ -67,7 +77,7 @@ public class WordGameObjectCtrl : MonoBehaviour {
 			//Debug.Log(string.Format("Distance {0} , holdDuration {1}, total = {2}", distanceToTravel, holdDuration*100, distanceToTravel / (holdDuration*100)));
 			trail.SetActive(true);
 			float sHeight = trail.GetComponent<SpriteRenderer>().sprite.bounds.size.y;
-			float prc = holdDuration/existanceTime;
+            float prc = holdDuration/timeOnScreen;
 			//Debug.Log("prc " + prc);
 			float trailHeight = (distanceToTravel / (sHeight*100)) * prc;
 			//float trailHeight = ((Camera.main.orthographicSize * 2.0f) / sHeight) * prc;

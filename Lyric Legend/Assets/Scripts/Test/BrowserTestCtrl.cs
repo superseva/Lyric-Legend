@@ -40,7 +40,8 @@ public class BrowserTestCtrl : MonoBehaviour {
 		}
 	}
 
-    public void BrowseCache(){
+    public void BrowseCache()
+    {
         fileList = Directory.GetFiles(Application.temporaryCachePath);
         Debug.Log(fileList.Length);
         for (int i = 0; i < fileList.Length; i++)
@@ -123,20 +124,21 @@ public class BrowserTestCtrl : MonoBehaviour {
 	}
 
 
-	public void OnPressPlay()
+	public void OnPressPlay(int difficulty)
 	{
 		if(string.IsNullOrEmpty(textUIJsonSelected.text) || string.IsNullOrEmpty(textUISongSelected.text))
 		{
 			Debug.Log("NOT ALL FILES PRESENT");
 			return;
 		}
+        StaticDataManager.difficulty = difficulty;
 		gameManager.SetActive(true);
-
 		UIEventManager.PrepareGameFireEvent();
 		choosePanel.SetActive(false);
 	}
 
-	void OnEnable(){
+	void OnEnable()
+    {
 		UIEventManager.OnListItemFileSelected += OnFileSelected;
 	}
 

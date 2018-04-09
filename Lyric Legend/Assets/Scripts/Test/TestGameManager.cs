@@ -20,6 +20,7 @@ public class TestGameManager : MonoBehaviour {
 	public GameObject gameElements;
     public GameObject stageVisual;
 
+    private Camera cam;
     private AudioPeer audioPeer;
 	private AssetBundle myLoadedAssetBundle;
 	private GameObject audioGameObject;
@@ -28,16 +29,12 @@ public class TestGameManager : MonoBehaviour {
 	private float currentAudioTime;
 	private float sampleRate = 44100f;
 
-	private string jsonStringFromFile;
-	private SongData songData;
-	private float timeOnScreen = 2;
-
 	private int listIndex = 0;
 	private float nextShowTime = 0;
 	private float nextHitTime = 0;
 	private List<WordGameObjectCtrl>wordsCtrlList = new List<WordGameObjectCtrl>();
 
-	private Camera cam;
+	
 	//SCREEN POZITIONS
     private float LyricStartPointInPercent = 1;
     private float LyricEndPointInPercent = 0.1f;
@@ -55,20 +52,21 @@ public class TestGameManager : MonoBehaviour {
 	//COLIDER AREAS
 	public ClickAreaCtrl[] clickAreas = new ClickAreaCtrl[3];
 
-	//temp
-	private int clicksCount;
-	public Text clicksCountText;
+    private WordGameObjectCtrl currentWord;
 
-	private WordGameObjectCtrl currentWord;
+	//clicks count TEMP
+	private int clicksCount;
 
 	//moving update
 	private float rangeTime;
 	private float percentTime;
-
 	private float newY;
 
+    //JSON
     private JsonData configData;
-
+    private string jsonStringFromFile;
+    private SongData songData;
+    private float timeOnScreen = 2;
     private string manifestPath = "https://firebasestorage.googleapis.com/v0/b/karaokehero-b35cc.appspot.com/o/AssetBundles?alt=media&token=3103cdd8-6792-4efc-aa21-029e3247512d";
 
 	void Start () {
@@ -127,24 +125,30 @@ public class TestGameManager : MonoBehaviour {
 		StopCoroutine(LoadAudioAsset());
 	}
 
+    /*
+     * PREPARE THE GAMESCREEN
+     * Enable/Disable elements
+     * finaly start loading AUDIO ASSET
+     */
+
 	void OnPrepareEvent(){
-		//Debug.Log( string.Format("PREPARING : {0} file and {1} file", StaticDataManager.SelectedJsonName, StaticDataManager.SelectedAudioName) );
-		ScoreCtrl.currentScore = 0;
 		listIndex = 0;
 		nextShowTime = 0;
 		nextHitTime = 0;
-
 		foreach(ClickAreaCtrl c in clickAreas){
 			c.gameObject.SetActive(true);
 		}
 		gameElements.SetActive(true);
 		gameUI.SetActive(true);
+        ScoreCtrl.ResetScore();
 		clicksCount = 0;
-		clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
-
 		StartCoroutine(LoadAudioAsset());
 	}
 
+    /* 
+     * CONFIGURATION
+     * TAKE THE JSON CONFIG FILE AND SETUP THE VARIABLES
+     */
     void Configurate(){
         string path = Path.Combine(Application.persistentDataPath, "config.json");
         if (!File.Exists(path))
@@ -152,14 +156,23 @@ public class TestGameManager : MonoBehaviour {
             Debug.Log("NO CONFIG");
             return;
         }
-
         configData = JsonMapper.ToObject<JsonData>(File.ReadAllText(path));
-        //Debug.Log("LyricStartPointFromScreenBottomInPercent = " + configData["LyricStartPointFromScreenBottomInPercent"]);
-        LyricStartPointInPercent = (float)configData["LyricStartPointInPercent"];
-        LyricEndPointInPercent = (float)configData["LyricEndPointInPercent"];
-        StageVisualPositionInPercent = (float)configData["StageVisualPositionInPercent"];
+        // POSITIONING CONFIG
+        LyricStartPointInPercent = (float)configData["POSITIONING"]["LyricStartPointInPercent"];
+        LyricEndPointInPercent = (float)configData["POSITIONING"]["LyricEndPointInPercent"];
+        StageVisualPositionInPercent = (float)configData["POSITIONING"]["StageVisualPositionInPercent"];
+        // SCORING CONFIG
+        ScoreCtrl.pointValue = (float)configData["SCORING"]["PointValue"];
+        ScoreCtrl.streakMultiplier = (float)configData["SCORING"]["StreakMultiplier"];
+        ScoreCtrl.clickPerfectTimeOffset = (float)configData["SCORING"]["ClickPerfectTimeOffset"];
+       // LyricStartPointInPercent = (float)configData["LyricStartPointInPercent"];
+       // LyricEndPointInPercent = (float)configData["LyricEndPointInPercent"];
+       // StageVisualPositionInPercent = (float)configData["StageVisualPositionInPercent"];
     }
 
+    /*
+     * LOADING AUDIO ASSETS
+     */
 	IEnumerator LoadAudioAsset(){
 		string folderPath = Path.Combine(Application.persistentDataPath, StaticDataManager.AUDIO_FOLDER);
 		string filePath = Path.Combine(folderPath, StaticDataManager.SelectedAudioName);
@@ -282,7 +295,7 @@ public class TestGameManager : MonoBehaviour {
 		listIndex = 0;
 		nextShowTime = float.Parse(songData.wordsList[listIndex].time) - timeOnScreen;
 		nextHitTime = float.Parse(songData.wordsList[listIndex].time);
-		// FORWARD SONG TO A WORD (listIndex)
+		// FORWARD SONG TO A WORD (listIndex) if you want
 		audioSource.timeSamples = Mathf.CeilToInt(sampleRate * (nextShowTime-2));
 		audioSource.Play();
 	}
@@ -304,12 +317,15 @@ public class TestGameManager : MonoBehaviour {
 			wordGameObject = Instantiate(wordGameObjectPrefab, gameObject.transform);
 			wordGameObject.name = "WordAt_"+songData.wordsList[i].time.ToString();
 			wordCtrl = wordGameObject.GetComponent<WordGameObjectCtrl>();
-			wordCtrl.orderIndex = i;
-			wordCtrl.existanceTime = timeOnScreen;
+			wordCtrl.orderIndex = i+1;// starts from 1
+            wordCtrl.timeOnScreen = timeOnScreen;
 			wordCtrl.distanceToTravel = distanceOnScreen;
             wordCtrl.SetData(songData.wordsList[i], songData.mp3dealy);
-			wordCtrl.startPosition = startPositionsInWorld[wordCtrl.wordData.index];
-			wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.wordData.index];
+            // set hard difficulty
+            wordCtrl.xPositionIndex = (StaticDataManager.difficulty == 2) ? Mathf.FloorToInt(Random.Range(1, 3.99f)) : wordCtrl.wordData.index;
+            //set start & end positions
+            wordCtrl.startPosition = startPositionsInWorld[wordCtrl.xPositionIndex];
+            wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.xPositionIndex];
 			wordGameObject.transform.localPosition = wordCtrl.startPosition;
 			wordsCtrlList.Add(wordCtrl);
 			wordGameObject.SetActive(false);
@@ -339,8 +355,6 @@ public class TestGameManager : MonoBehaviour {
 		}
 	}
 
-
-
 	void Update () {
 		
 		if(!audioSource)
@@ -369,9 +383,16 @@ public class TestGameManager : MonoBehaviour {
 			{
 				rangeTime = word.hitTime - word.showTime;
 				percentTime = (currentAudioTime - word.showTime) / rangeTime;
-				//newY = (distanceOnScreen - (distanceOnScreen * percentTime)) + endPozitionOnScreen;
-				//word.gameObject.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(xPozitions[word.wordData.index], newY, 10));
-				word.gameObject.transform.localPosition = Vector3.Lerp(word.startPosition, word.endPosition, percentTime);
+                if (word.isClicked != true)
+                {
+                    newY = (distanceOnScreen - (distanceOnScreen * percentTime)) + endPozitionOnScreen;
+                    //xPozitions[word.wordData.index]
+                    word.gameObject.transform.localPosition = Camera.main.ScreenToWorldPoint(new Vector3(xPozitions[word.xPositionIndex], newY, 10));
+                }
+                else
+                {
+                    word.gameObject.transform.localPosition = Vector3.Lerp(word.startPosition, word.endPosition, percentTime);
+                }
 				if(currentAudioTime >= word.hitTime){
 					word.textMesh.color = new Color(255,0,255);
 				}
@@ -405,15 +426,18 @@ public class TestGameManager : MonoBehaviour {
 					{
 						RegisterClick();
 						clickAreaCtrl = recipient.GetComponent<ClickAreaCtrl>();
-						wgCollidingCtrl = clickAreaCtrl.GetCollidingWord();
+                        wgCollidingCtrl = clickAreaCtrl.GetCollidingWord(); // returns a word if it is not clicked already
 						if(wgCollidingCtrl!=null)
 						{
-							RegisterWordHit(clickAreaCtrl);
+                            RegisterWordHit(clickAreaCtrl, wgCollidingCtrl);
 							if(wgCollidingCtrl.wordData.duration>0.0)
 							{
 								clickAreaCtrl.StartHolding(touch.fingerId, (float)wgCollidingCtrl.wordData.duration, currentAudioTime);
 							}
-						}
+                        }else{
+                            // empty click. kill streak
+                            RegisterWordMiss(clickAreaCtrl);
+                        }
 					}
 				}
 			}
@@ -447,18 +471,25 @@ public class TestGameManager : MonoBehaviour {
 		}
 	}
 
+    //REGISTER ANY CLICK ON BUTTON
 	void RegisterClick()
 	{
 		clicksCount ++;
-		clicksCountText.text = "CLICKS COUNT :" + clicksCount.ToString();
 	}
 
+    // REGISTER CLICK ON THE WORD (SCORE)
 	GameObject hitFX;
-	void RegisterWordHit(ClickAreaCtrl cArea){
+    void RegisterWordHit(ClickAreaCtrl cArea, WordGameObjectCtrl wrd){
 		hitFX = PoolManager.SpawnObject(successWordHitFX);
 		hitFX.transform.position = cArea.gameObject.transform.position;
-		ScoreCtrl.AddScore();
+        ScoreCtrl.WordHit(wrd.orderIndex, currentAudioTime, wrd.hitTime);
 	}
+    void RegisterWordMiss(ClickAreaCtrl cArea)
+    {
+        ScoreCtrl.WordMiss();
+        //hitFX = PoolManager.SpawnObject(successWordHitFX);
+        //hitFX.transform.position = cArea.gameObject.transform.position;
+    }
 
 	void RegisterHoldingWord(ClickAreaCtrl cAreaCtrl){
 		
