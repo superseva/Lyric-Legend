@@ -6,15 +6,11 @@ public class ScoreCtrl : MonoBehaviour {
 
 	
     public static float currentScore = 0;
-    public static float pointValue = 100;
     public static float streak = 0;
-    public static float streakMultiplier = 1;
-    public static float clickPerfectTimeOffset = 0.05f;
 
     public static int perfectCount = 0;
     public static int nonPerfectCount = 0;
     public static int missCount = 0;
-
 
     private static int lastOrderIndex = 0;
 
@@ -57,30 +53,17 @@ public class ScoreCtrl : MonoBehaviour {
     private static void AddScore(float hitTime, float wordTime, bool isPerfect)
     {
         if(isPerfect){
-            currentScore += pointValue;
+            currentScore += Config.POINT_VALUE;
             perfectCount++;
             UIEventManager.PerfectTapCountChangedEvent();
         }else{
-            currentScore += pointValue / 2;
+            currentScore += Config.POINT_VALUE / 2;
             nonPerfectCount++;
             UIEventManager.NonPerfectTapCountChangedEvent();
         }
-            
-        
-        // ADD PERFECT/NON PERFECT SCORE
-        //timeDiff = Mathf.Abs(hitTime - wordTime);
-        //if (timeDiff < clickPerfectTimeOffset){
-        //    currentScore += pointValue;
-        //    perfectCount++;
-        //    UIEventManager.PerfectTapCountChangedEvent();
-        //}else{
-        //    currentScore += pointValue / 2;
-        //    nonPerfectCount++;
-        //    UIEventManager.NonPerfectTapCountChangedEvent();
-        //}
 
         // ADD STREAK BONUS
-        currentScore += streak*streakMultiplier;
+        currentScore += streak*Config.STREAK_MULTIPLIER;
         UIEventManager.ScoreChangedEvent();
 	}
 
@@ -105,9 +88,9 @@ public class ScoreCtrl : MonoBehaviour {
 	public static void AddHoldPoints(float timeToBegin, float timeStarted, float durationToHold, float currentTime)
     {
 		float prc = Mathf.Clamp((currentTime-timeStarted) / durationToHold, 0,1);
-        float maxPoints = durationToHold * streakMultiplier;
+        float maxPoints = durationToHold * Config.STREAK_MULTIPLIER;
 		if(prc<1){
-            currentScore += streakMultiplier*(Mathf.CeilToInt(prc*maxPoints));
+            currentScore += Config.STREAK_MULTIPLIER*(Mathf.CeilToInt(prc*maxPoints));
             UIEventManager.ScoreChangedEvent();
 		}
 	}

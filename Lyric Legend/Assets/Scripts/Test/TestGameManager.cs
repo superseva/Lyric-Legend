@@ -34,11 +34,11 @@ public class TestGameManager : MonoBehaviour {
 	private float nextHitTime = 0;
 	private List<WordGameObjectCtrl>wordsCtrlList = new List<WordGameObjectCtrl>();
 
-	
+    // word positioning and distribution
+    private float lastPlacedTimestamp = 0;
+    private int lastPlacedIndex = 1; //lane index (1, 2 or 3)
+
 	//SCREEN POZITIONS
-    private float LyricStartPointInPercent = 1;
-    private float LyricEndPointInPercent = 0.1f;
-    private float StageVisualPositionInPercent = 0.5f;
     private Vector3 stageVisualPosition = Vector3.zero;
 
 	private float distanceOnScreen;
@@ -63,7 +63,6 @@ public class TestGameManager : MonoBehaviour {
 	private float newY;
 
     //JSON
-    private JsonData configData;
     private string jsonStringFromFile;
     private SongData songData;
     private float timeOnScreen = 2;
@@ -71,15 +70,17 @@ public class TestGameManager : MonoBehaviour {
 
 	void Start () {
 
-        Configurate();
+        if(!Config.ConfigGeneral()){
+            return;
+        }
 
 		Input.multiTouchEnabled = true;
 		cam = Camera.main;
 		Screen.sleepTimeout = SleepTimeout.NeverSleep;
 	
         //startPozitionOnScreen = Screen.height;
-        startPozitionOnScreen = Mathf.Round(Screen.height * LyricStartPointInPercent);
-        endPozitionOnScreen = Mathf.Round(Screen.height * LyricEndPointInPercent);
+        startPozitionOnScreen = Mathf.Round(Screen.height * Config.LYRIC_START_POINT_IN_PERCENT);
+        endPozitionOnScreen = Mathf.Round(Screen.height * Config.LYRIC_END_POINT_IN_PERCENT);
 		distanceOnScreen = startPozitionOnScreen - endPozitionOnScreen;
 		float screenQ = Screen.width/3;
 		xPozitions = new float[4];
@@ -106,7 +107,7 @@ public class TestGameManager : MonoBehaviour {
 		clickAreas[1].gameObject.transform.position = endPositionsOnInWorld[2];
 		clickAreas[2].gameObject.transform.position = endPositionsOnInWorld[3];
 
-        stageVisualPosition = cam.ScreenToWorldPoint( new Vector3(Mathf.Round(Screen.width * 0.5f) , Mathf.Round(Screen.height * StageVisualPositionInPercent), screenZ));
+        stageVisualPosition = cam.ScreenToWorldPoint( new Vector3(Mathf.Round(Screen.width * 0.5f) , Mathf.Round(Screen.height * Config.STAGE_VISUAL_POSITION_IN_PERCENT), screenZ));
         stageVisual.transform.position = stageVisualPosition;
 
 		PoolManager.WarmPool(successWordHitFX, 20);
@@ -145,34 +146,6 @@ public class TestGameManager : MonoBehaviour {
 		StartCoroutine(LoadAudioAsset());
 	}
 
-    /* 
-     * CONFIGURATION
-     * TAKE THE JSON CONFIG FILE AND SETUP THE VARIABLES
-     */
-    void Configurate(){
-        string path = Path.Combine(Application.persistentDataPath, "config.json");
-        if (!File.Exists(path))
-        {
-            Debug.Log("NO CONFIG");
-            return;
-        }
-        configData = JsonMapper.ToObject<JsonData>(File.ReadAllText(path));
-        // POSITIONING CONFIG
-        LyricStartPointInPercent = (float)configData["POSITIONING"]["LyricStartPointInPercent"];
-        LyricEndPointInPercent = (float)configData["POSITIONING"]["LyricEndPointInPercent"];
-        StageVisualPositionInPercent = (float)configData["POSITIONING"]["StageVisualPositionInPercent"];
-        // SCORING CONFIG
-        ScoreCtrl.pointValue = (float)configData["SCORING"]["PointValue"];
-        if (StaticDataManager.difficulty == 2){
-            ScoreCtrl.streakMultiplier = (float)configData["SCORING"]["StreakMultiplierHard"];
-        }else{
-            ScoreCtrl.streakMultiplier = (float)configData["SCORING"]["StreakMultiplierNormal"];
-        }
-        ScoreCtrl.clickPerfectTimeOffset = (float)configData["SCORING"]["ClickPerfectTimeOffset"];
-       // LyricStartPointInPercent = (float)configData["LyricStartPointInPercent"];
-       // LyricEndPointInPercent = (float)configData["LyricEndPointInPercent"];
-       // StageVisualPositionInPercent = (float)configData["StageVisualPositionInPercent"];
-    }
 
     /*
      * LOADING AUDIO ASSETS
@@ -327,10 +300,18 @@ public class TestGameManager : MonoBehaviour {
             wordCtrl.SetData(songData.wordsList[i], songData.mp3dealy);
             // set hard difficulty
             wordCtrl.xPositionIndex = (StaticDataManager.difficulty == 2) ? Mathf.FloorToInt(Random.Range(1, 3.99f)) : wordCtrl.wordData.index;
+            if(wordCtrl.hitTime - lastPlacedTimestamp < Config.MINIMUM_TIME_DIFFERENCE_IN_LANE && wordCtrl.xPositionIndex==lastPlacedIndex){
+                wordCtrl.xPositionIndex += 1;
+                if(wordCtrl.xPositionIndex>3)
+                    wordCtrl.xPositionIndex = 1;
+            }
+            lastPlacedIndex = wordCtrl.xPositionIndex;
+            lastPlacedTimestamp = wordCtrl.hitTime;
             //set start & end positions
             wordCtrl.startPosition = startPositionsInWorld[wordCtrl.xPositionIndex];
             wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.xPositionIndex];
 			wordGameObject.transform.localPosition = wordCtrl.startPosition;
+
 			wordsCtrlList.Add(wordCtrl);
 			wordGameObject.SetActive(false);
 		}
@@ -487,7 +468,7 @@ public class TestGameManager : MonoBehaviour {
     void RegisterWordHit(ClickAreaCtrl cArea, WordGameObjectCtrl wrd){
 		hitFX = PoolManager.SpawnObject(successWordHitFX);
         HitWordFX hitWordFX = hitFX.GetComponent<HitWordFX>();
-        isPerfect = Mathf.Abs(currentAudioTime - wrd.hitTime) < ScoreCtrl.clickPerfectTimeOffset;
+        isPerfect = Mathf.Abs(currentAudioTime - wrd.hitTime) < Config.CLICK_PERFECT_TIME_OFFSET;
         if(isPerfect)
             hitWordFX.perfect = true;
         else
