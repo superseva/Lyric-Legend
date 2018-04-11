@@ -163,7 +163,11 @@ public class TestGameManager : MonoBehaviour {
         StageVisualPositionInPercent = (float)configData["POSITIONING"]["StageVisualPositionInPercent"];
         // SCORING CONFIG
         ScoreCtrl.pointValue = (float)configData["SCORING"]["PointValue"];
-        ScoreCtrl.streakMultiplier = (float)configData["SCORING"]["StreakMultiplier"];
+        if (StaticDataManager.difficulty == 2){
+            ScoreCtrl.streakMultiplier = (float)configData["SCORING"]["StreakMultiplierHard"];
+        }else{
+            ScoreCtrl.streakMultiplier = (float)configData["SCORING"]["StreakMultiplierNormal"];
+        }
         ScoreCtrl.clickPerfectTimeOffset = (float)configData["SCORING"]["ClickPerfectTimeOffset"];
        // LyricStartPointInPercent = (float)configData["LyricStartPointInPercent"];
        // LyricEndPointInPercent = (float)configData["LyricEndPointInPercent"];
@@ -424,7 +428,6 @@ public class TestGameManager : MonoBehaviour {
 					GameObject recipient = hitInfo.transform.gameObject;
 					if(recipient.tag == "ClickArea")
 					{
-						RegisterClick();
 						clickAreaCtrl = recipient.GetComponent<ClickAreaCtrl>();
                         wgCollidingCtrl = clickAreaCtrl.GetCollidingWord(); // returns a word if it is not clicked already
 						if(wgCollidingCtrl!=null)
@@ -436,7 +439,8 @@ public class TestGameManager : MonoBehaviour {
 							}
                         }else{
                             // empty click. kill streak
-                            RegisterWordMiss(clickAreaCtrl);
+                            //RegisterWordMiss(clickAreaCtrl);
+                            RegisterEmptyClick();
                         }
 					}
 				}
@@ -472,24 +476,26 @@ public class TestGameManager : MonoBehaviour {
 	}
 
     //REGISTER ANY CLICK ON BUTTON
-	void RegisterClick()
+	void RegisterEmptyClick()
 	{
-		clicksCount ++;
+        ScoreCtrl.EmptyClick();
 	}
 
     // REGISTER CLICK ON THE WORD (SCORE)
 	GameObject hitFX;
+    bool isPerfect;
     void RegisterWordHit(ClickAreaCtrl cArea, WordGameObjectCtrl wrd){
 		hitFX = PoolManager.SpawnObject(successWordHitFX);
+        HitWordFX hitWordFX = hitFX.GetComponent<HitWordFX>();
+        isPerfect = Mathf.Abs(currentAudioTime - wrd.hitTime) < ScoreCtrl.clickPerfectTimeOffset;
+        if(isPerfect)
+            hitWordFX.perfect = true;
+        else
+            hitWordFX.perfect = false;
 		hitFX.transform.position = cArea.gameObject.transform.position;
-        ScoreCtrl.WordHit(wrd.orderIndex, currentAudioTime, wrd.hitTime);
+        hitWordFX.runAnim();
+        ScoreCtrl.WordHit(wrd.orderIndex, currentAudioTime, wrd.hitTime, isPerfect);
 	}
-    void RegisterWordMiss(ClickAreaCtrl cArea)
-    {
-        ScoreCtrl.WordMiss();
-        //hitFX = PoolManager.SpawnObject(successWordHitFX);
-        //hitFX.transform.position = cArea.gameObject.transform.position;
-    }
 
 	void RegisterHoldingWord(ClickAreaCtrl cAreaCtrl){
 		

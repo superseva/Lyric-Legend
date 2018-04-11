@@ -2,37 +2,47 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class UIEventManager : MonoBehaviour {
-	
-	// PREPARE GAME EVENT
-	public delegate void PrepareGame();
-	public static event PrepareGame OnPrepareGame;
-	public static void PrepareGameFireEvent(){
-		if(OnPrepareGame!=null){
-			OnPrepareGame();
-		}
-	}
+public class UIEventManager : MonoBehaviour
+{
 
-	// START GAME EVENT
-	public delegate void StartGame();
-	public static event StartGame OnStartGame;
-	public static void StartGameFireEvent(){
-		if(OnStartGame!=null){
-			OnStartGame();
-		}
-	}
+    #region GAME EVENTS
+    // PREPARE GAME EVENT
+    public delegate void PrepareGame();
+    public static event PrepareGame OnPrepareGame;
+    public static void PrepareGameFireEvent()
+    {
+        if (OnPrepareGame != null)
+        {
+            OnPrepareGame();
+        }
+    }
 
+    // START GAME EVENT
+    public delegate void StartGame();
+    public static event StartGame OnStartGame;
+    public static void StartGameFireEvent()
+    {
+        if (OnStartGame != null)
+        {
+            OnStartGame();
+        }
+    }
+    #endregion
 
-	// SCORE
-	public delegate void ScoreChanged();
+    #region SCORE EVENTS
+    // SCORE
+    public delegate void ScoreChanged();
     public static event ScoreChanged OnScoreChanged;
-    public static void ScoreChangedEvent(){
-        if(OnScoreChanged!=null){
+    public static void ScoreChangedEvent()
+    {
+        if (OnScoreChanged != null)
+        {
             OnScoreChanged();
-		}
-	}
+        }
+    }
+    #endregion  
 
-    //STREAK
+    #region STREAK EVENTS
     public delegate void StreakChanged();
     public static event StreakChanged OnStreakChanged;
     public static void StreakChangedEvent()
@@ -52,21 +62,59 @@ public class UIEventManager : MonoBehaviour {
             OnStreakReset();
         }
     }
+    #endregion
+
+    #region MISC EVENTS
+
+    public delegate void PerfectTapCountChanged();
+    public static event PerfectTapCountChanged OnPerfectTapCountChanged;
+    public static void PerfectTapCountChangedEvent()
+    {
+        if (OnPerfectTapCountChanged != null)
+        {
+            OnPerfectTapCountChanged();
+        }
+    }
+
+    public delegate void NonPerfectTapCountChanged();
+    public static event NonPerfectTapCountChanged OnNonPerfectTapCountChanged;
+    public static void NonPerfectTapCountChangedEvent()
+    {
+        if (OnNonPerfectTapCountChanged != null)
+        {
+            OnNonPerfectTapCountChanged();
+        }
+    }
+
+    public delegate void MissWordCountChanged();
+    public static event MissWordCountChanged OnMissWordCountChanged;
+    public static void MissWordCountChangedEvent()
+    {
+        if (OnMissWordCountChanged != null)
+        {
+            OnMissWordCountChanged();
+        }
+    }
+
+    #endregion
+
+    #region LIST EVENTS
+    // SELECT FILE LIST ITEM
+    public delegate void SelectListItemFile(string fileName, string fileType, string listItemName);
+    public static event SelectListItemFile OnListItemFileSelected;
+    public static void SelectFileFromList(string fileName, string fileType, string listItemName)
+    {
+        if (OnListItemFileSelected != null)
+        {
+            OnListItemFileSelected(fileName, fileType, listItemName);
+        }
+    }
+    #endregion
 
 
-
-	// SELECT FILE LIST ITEM
-	public delegate void SelectListItemFile(string fileName, string fileType, string listItemName);
-	public static event SelectListItemFile OnListItemFileSelected;
-	public static void SelectFileFromList(string fileName, string fileType, string listItemName){
-		if(OnListItemFileSelected!=null){
-			OnListItemFileSelected(fileName, fileType, listItemName);
-		}
-	}
-
-
-	/* GAMEOBJECT AS BUTTON */
-	/*
+    #region button events - DEPRICATED
+    /* GAMEOBJECT AS BUTTON */
+    /*
 	// GameobjectButton TouchDown
 	public delegate void TouchDownGameObject (GameObject g);
 	public static event TouchDownGameObject OnTouchDownGameObject;
@@ -100,4 +148,5 @@ public class UIEventManager : MonoBehaviour {
 		}
 	}
 	*/
+    #endregion
 }

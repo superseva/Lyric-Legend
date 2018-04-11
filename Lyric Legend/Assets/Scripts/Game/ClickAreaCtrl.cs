@@ -40,6 +40,9 @@ public class ClickAreaCtrl : MonoBehaviour {
 	{
 		if (coll.gameObject.tag == "WordCollider"){
 			wordCtrl = coll.gameObject.GetComponent<WordGameObjectCtrl>();
+            if(!wordCtrl.isClicked){
+                ScoreCtrl.WordMiss();
+            }
 			if(colliders.Contains(wordCtrl)){
 				colliders.Remove(wordCtrl);
 			}

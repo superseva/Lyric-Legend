@@ -55,8 +55,8 @@ public class WordGameObjectCtrl : MonoBehaviour {
 	}
 	private void Destroy()
 	{
-        if (!isClicked)
-            ScoreCtrl.WordMiss();
+        //if (!isClicked)
+            //ScoreCtrl.WordMiss();
         gameObject.SetActive(false);
 	}
 

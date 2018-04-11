@@ -11,6 +11,11 @@ public class ScoreCtrl : MonoBehaviour {
     public static float streakMultiplier = 1;
     public static float clickPerfectTimeOffset = 0.05f;
 
+    public static int perfectCount = 0;
+    public static int nonPerfectCount = 0;
+    public static int missCount = 0;
+
+
     private static int lastOrderIndex = 0;
 
     private static float timeDiff;
@@ -23,17 +28,25 @@ public class ScoreCtrl : MonoBehaviour {
         ResetStreak();
         UIEventManager.StreakChangedEvent();
 
+        perfectCount = 0;
+        nonPerfectCount = 0;
+        missCount = 0;
+        UIEventManager.PerfectTapCountChangedEvent();
+        UIEventManager.NonPerfectTapCountChangedEvent();
+        UIEventManager.MissWordCountChangedEvent();
     }
 
-    public static void WordHit(int orderIndex, float hitTime, float wordTime)
+    public static void WordHit(int orderIndex, float hitTime, float wordTime, bool isPerfect)
     {
         CheckStreak(orderIndex);// set the streak value
-        AddScore(hitTime, wordTime);
+        AddScore(hitTime, wordTime, isPerfect);
     }
 
     public static void WordMiss()
     {
         ResetStreak();
+        missCount++;
+        UIEventManager.MissWordCountChangedEvent();
     }
 
     public static void EmptyClick()
@@ -41,19 +54,33 @@ public class ScoreCtrl : MonoBehaviour {
         ResetStreak();
     }
 
-    private static void AddScore(float hitTime, float wordTime)
+    private static void AddScore(float hitTime, float wordTime, bool isPerfect)
     {
-        // ADD PERFECT/NON PERFECT SCORE
-        timeDiff = Mathf.Abs(hitTime - wordTime);
-        if (timeDiff < clickPerfectTimeOffset){
+        if(isPerfect){
             currentScore += pointValue;
+            perfectCount++;
+            UIEventManager.PerfectTapCountChangedEvent();
         }else{
             currentScore += pointValue / 2;
+            nonPerfectCount++;
+            UIEventManager.NonPerfectTapCountChangedEvent();
         }
+            
+        
+        // ADD PERFECT/NON PERFECT SCORE
+        //timeDiff = Mathf.Abs(hitTime - wordTime);
+        //if (timeDiff < clickPerfectTimeOffset){
+        //    currentScore += pointValue;
+        //    perfectCount++;
+        //    UIEventManager.PerfectTapCountChangedEvent();
+        //}else{
+        //    currentScore += pointValue / 2;
+        //    nonPerfectCount++;
+        //    UIEventManager.NonPerfectTapCountChangedEvent();
+        //}
 
         // ADD STREAK BONUS
         currentScore += streak*streakMultiplier;
-
         UIEventManager.ScoreChangedEvent();
 	}
 
