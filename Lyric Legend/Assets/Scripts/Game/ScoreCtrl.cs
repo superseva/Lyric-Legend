@@ -50,6 +50,12 @@ public class ScoreCtrl : MonoBehaviour {
         ResetStreak();
     }
 
+    public static void FakeClick()
+    {
+        currentScore -= Config.FAKE_WORD_PENALTY;
+        UIEventManager.ScoreChangedEvent();
+    }
+
     private static void AddScore(float hitTime, float wordTime, bool isPerfect)
     {
         if(isPerfect){

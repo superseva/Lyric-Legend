@@ -71,6 +71,8 @@ public class WordGameObjectCtrl : MonoBehaviour {
         showTime = (float.Parse(wordData.time) - timeOnScreen) + mp3Delay;
         hitTime = float.Parse(wordData.time) + mp3Delay;
 		holdDuration = (float)wordData.duration;
+        if (wd.isFake)
+            isFake = true;
 		//Debug.Log("duration: " + holdDuration);
 		if(holdDuration>0){
 			

@@ -10,4 +10,5 @@ public class WordData {
 	public string time;
 	public double duration;
 	public int index;
+    public bool isFake;
 }

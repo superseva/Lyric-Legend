@@ -11,5 +11,7 @@ public class SongData
 	public string artist;
 	public float mp3dealy = 0;
 	public float timeOnScreen = 1;
-	public WordData[] wordsList;
+	public List<WordData> wordsList;
+    public List<WordData> fakeWords;
+
 }

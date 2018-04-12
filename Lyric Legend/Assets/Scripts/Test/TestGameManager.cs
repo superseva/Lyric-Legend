@@ -144,6 +144,8 @@ public class TestGameManager : MonoBehaviour {
         ScoreCtrl.ResetScore();
 		clicksCount = 0;
 		StartCoroutine(LoadAudioAsset());
+
+        GameLogger.Reset();
 	}
 
 
@@ -267,6 +269,8 @@ public class TestGameManager : MonoBehaviour {
 		audioSource = audioGameObject.GetComponent<AudioSource>();
 		audioClip = audioSource.clip;
         audioPeer.audioSource = audioSource;
+
+        //GENERATE LYRICS 
 		GenerateLyricObjects();
 
 		listIndex = 0;
@@ -284,12 +288,15 @@ public class TestGameManager : MonoBehaviour {
 		jsonStringFromFile = File.ReadAllText(filePath);
 		songData = JsonMapper.ToObject<SongData>(jsonStringFromFile);
 		timeOnScreen = songData.timeOnScreen;
-		//Debug.Log("TIME ON SCREEN " + timeOnScreen);
 		wordsCtrlList.Clear();
+
+        // IF  DIFFICULTY == 2 (HARD) INJECT FAKE WORDS IN TO THE LIST
+        if (StaticDataManager.difficulty == 2)
+            FakeWordsInjector.Inject(songData);
 
 		GameObject wordGameObject;
 		WordGameObjectCtrl wordCtrl;
-		for(int i=0; i<songData.wordsList.Length; i++)
+        for(int i=0; i<songData.wordsList.Count; i++)
 		{
 			wordGameObject = Instantiate(wordGameObjectPrefab, gameObject.transform);
 			wordGameObject.name = "WordAt_"+songData.wordsList[i].time.ToString();
@@ -330,6 +337,8 @@ public class TestGameManager : MonoBehaviour {
 		pickUI.SetActive(true);
 		gameElements.SetActive(false);
 		gameObject.SetActive(false);
+
+        GameLogger.ExportToDisk();
 	}
 
 	private void ClearChildren()
@@ -466,6 +475,13 @@ public class TestGameManager : MonoBehaviour {
 	GameObject hitFX;
     bool isPerfect;
     void RegisterWordHit(ClickAreaCtrl cArea, WordGameObjectCtrl wrd){
+        if(wrd.isFake){
+            Debug.Log("FAKE HIT");
+            ScoreCtrl.FakeClick();
+            UIEventManager.FakeWordHitEvent();
+            return;
+        }
+
 		hitFX = PoolManager.SpawnObject(successWordHitFX);
         HitWordFX hitWordFX = hitFX.GetComponent<HitWordFX>();
         isPerfect = Mathf.Abs(currentAudioTime - wrd.hitTime) < Config.CLICK_PERFECT_TIME_OFFSET;
@@ -473,6 +489,7 @@ public class TestGameManager : MonoBehaviour {
             hitWordFX.perfect = true;
         else
             hitWordFX.perfect = false;
+        GameLogger.AddTap(wrd.hitTime, currentAudioTime, wrd.wordData.text);
 		hitFX.transform.position = cArea.gameObject.transform.position;
         hitWordFX.runAnim();
         ScoreCtrl.WordHit(wrd.orderIndex, currentAudioTime, wrd.hitTime, isPerfect);

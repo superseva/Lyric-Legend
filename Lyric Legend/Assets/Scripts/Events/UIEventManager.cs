@@ -40,6 +40,16 @@ public class UIEventManager : MonoBehaviour
             OnScoreChanged();
         }
     }
+    public delegate void FakeWordHit();
+    public static event FakeWordHit OnFakeWordHit;
+    public static void FakeWordHitEvent()
+    {
+        if (OnFakeWordHit != null)
+        {
+            OnFakeWordHit();
+        }
+    }
+
     #endregion  
 
     #region STREAK EVENTS

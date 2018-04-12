@@ -14,9 +14,9 @@ public static class Config {
     public static float POINT_VALUE;
     public static float STREAK_MULTIPLIER;
     public static float MINIMUM_TIME_DIFFERENCE_IN_LANE;
+    public static float FAKE_WORD_PENALTY;
 
     private static JsonData configData;
-
 
     public static bool ConfigGeneral () 
     {
@@ -24,7 +24,6 @@ public static class Config {
         string path = Path.Combine(Application.persistentDataPath, "config.json");
         if (!File.Exists(path))
         {
-            //Debug.Log("NO CONFIG");
             isDone = false;
             return isDone;
         }
@@ -35,8 +34,10 @@ public static class Config {
         STAGE_VISUAL_POSITION_IN_PERCENT = (float)configData["POSITIONING"]["STAGE_VISUAL_POSITION_IN_PERCENT"];
         MINIMUM_TIME_DIFFERENCE_IN_LANE = (float)configData["POSITIONING"]["MINIMUM_TIME_DIFFERENCE_IN_LANE"];
 
+
         // SCORING CONFIG
         POINT_VALUE = (float)configData["SCORING"]["POINT_VALUE"];
+        FAKE_WORD_PENALTY = (float)configData["SCORING"]["FAKE_WORD_PENALTY"];
         if (StaticDataManager.difficulty == 2)
         {
             STREAK_MULTIPLIER = (float)configData["SCORING"]["STREAK_MULTIPLIER_HARD"];
