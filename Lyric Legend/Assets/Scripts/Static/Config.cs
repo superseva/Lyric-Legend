@@ -13,7 +13,7 @@ public static class Config {
     public static float CLICK_PERFECT_TIME_OFFSET;
     public static float POINT_VALUE;
     public static float STREAK_MULTIPLIER;
-    public static float MINIMUM_TIME_DIFFERENCE_IN_LANE;
+    //public static float MINIMUM_TIME_DIFFERENCE_IN_LANE;
     public static float FAKE_WORD_PENALTY;
 
     private static JsonData configData;
@@ -32,7 +32,7 @@ public static class Config {
         LYRIC_START_POINT_IN_PERCENT = (float)configData["POSITIONING"]["LYRIC_START_POINT_IN_PERCENT"];
         LYRIC_END_POINT_IN_PERCENT = (float)configData["POSITIONING"]["LYRIC_END_POINT_IN_PERCENT"];
         STAGE_VISUAL_POSITION_IN_PERCENT = (float)configData["POSITIONING"]["STAGE_VISUAL_POSITION_IN_PERCENT"];
-        MINIMUM_TIME_DIFFERENCE_IN_LANE = (float)configData["POSITIONING"]["MINIMUM_TIME_DIFFERENCE_IN_LANE"];
+        //MINIMUM_TIME_DIFFERENCE_IN_LANE = (float)configData["POSITIONING"]["MINIMUM_TIME_DIFFERENCE_IN_LANE"];
 
 
         // SCORING CONFIG

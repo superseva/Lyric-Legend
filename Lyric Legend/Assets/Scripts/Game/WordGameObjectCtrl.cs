@@ -67,12 +67,15 @@ public class WordGameObjectCtrl : MonoBehaviour {
 
     public void SetData(WordData wd, float mp3Delay){
 		wordData = wd;
-		textMesh.text = wordData.text;
+        textMesh.text = wordData.text.ToUpper();
         showTime = (float.Parse(wordData.time) - timeOnScreen) + mp3Delay;
         hitTime = float.Parse(wordData.time) + mp3Delay;
 		holdDuration = (float)wordData.duration;
         if (wd.isFake)
+        {
             isFake = true;
+            textMesh.color = Color.cyan;
+        }
 		//Debug.Log("duration: " + holdDuration);
 		if(holdDuration>0){
 			

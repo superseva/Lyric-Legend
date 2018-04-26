@@ -34,9 +34,6 @@ public class TestGameManager : MonoBehaviour {
 	private float nextHitTime = 0;
 	private List<WordGameObjectCtrl>wordsCtrlList = new List<WordGameObjectCtrl>();
 
-    // word positioning and distribution
-    private float lastPlacedTimestamp = 0;
-    private int lastPlacedIndex = 1; //lane index (1, 2 or 3)
 
 	//SCREEN POZITIONS
     private Vector3 stageVisualPosition = Vector3.zero;
@@ -52,12 +49,13 @@ public class TestGameManager : MonoBehaviour {
 	//COLIDER AREAS
 	public ClickAreaCtrl[] clickAreas = new ClickAreaCtrl[3];
 
-    private WordGameObjectCtrl currentWord;
+    private float[] lanesTimes = new float[3];
 
 	//clicks count TEMP
 	private int clicksCount;
 
 	//moving update
+    private WordGameObjectCtrl currentWord;
 	private float rangeTime;
 	private float percentTime;
 	private float newY;
@@ -83,29 +81,29 @@ public class TestGameManager : MonoBehaviour {
         endPozitionOnScreen = Mathf.Round(Screen.height * Config.LYRIC_END_POINT_IN_PERCENT);
 		distanceOnScreen = startPozitionOnScreen - endPozitionOnScreen;
 		float screenQ = Screen.width/3;
-		xPozitions = new float[4];
-		xPozitions[1] = 0;
-		xPozitions[1] = Mathf.Round(screenQ/2);
-		xPozitions[2] = Mathf.Round(Screen.width/2);
-		xPozitions[3] = Mathf.Round(screenQ*3 - screenQ/2);
+		xPozitions = new float[3];
+		//xPozitions[1] = 0;
+		xPozitions[0] = Mathf.Round(screenQ/2);
+		xPozitions[1] = Mathf.Round(Screen.width/2);
+		xPozitions[2] = Mathf.Round(screenQ*3 - screenQ/2);
 
-		startPositionsInWorld = new Vector3[4];
-		startPositionsInWorld[0] = new Vector3();
+		startPositionsInWorld = new Vector3[3];
+		//startPositionsInWorld[0] = new Vector3();
+		startPositionsInWorld[0] = cam.ScreenToWorldPoint( new Vector3(xPozitions[0], startPozitionOnScreen, screenZ));
 		startPositionsInWorld[1] = cam.ScreenToWorldPoint( new Vector3(xPozitions[1], startPozitionOnScreen, screenZ));
 		startPositionsInWorld[2] = cam.ScreenToWorldPoint( new Vector3(xPozitions[2], startPozitionOnScreen, screenZ));
-		startPositionsInWorld[3] = cam.ScreenToWorldPoint( new Vector3(xPozitions[3], startPozitionOnScreen, screenZ));
 
-		endPositionsOnInWorld = new Vector3[4];
-		endPositionsOnInWorld[0] = new Vector3();
+		endPositionsOnInWorld = new Vector3[3];
+		//endPositionsOnInWorld[0] = new Vector3();
+		endPositionsOnInWorld[0] = cam.ScreenToWorldPoint( new Vector3(xPozitions[0], endPozitionOnScreen, screenZ));
 		endPositionsOnInWorld[1] = cam.ScreenToWorldPoint( new Vector3(xPozitions[1], endPozitionOnScreen, screenZ));
 		endPositionsOnInWorld[2] = cam.ScreenToWorldPoint( new Vector3(xPozitions[2], endPozitionOnScreen, screenZ));
-		endPositionsOnInWorld[3] = cam.ScreenToWorldPoint( new Vector3(xPozitions[3], endPozitionOnScreen, screenZ));
 
 		bottomLine.transform.position = endPositionsOnInWorld[2];
 
-		clickAreas[0].gameObject.transform.position = endPositionsOnInWorld[1];
-		clickAreas[1].gameObject.transform.position = endPositionsOnInWorld[2];
-		clickAreas[2].gameObject.transform.position = endPositionsOnInWorld[3];
+		clickAreas[0].gameObject.transform.position = endPositionsOnInWorld[0];
+		clickAreas[1].gameObject.transform.position = endPositionsOnInWorld[1];
+		clickAreas[2].gameObject.transform.position = endPositionsOnInWorld[2];
 
         stageVisualPosition = cam.ScreenToWorldPoint( new Vector3(Mathf.Round(Screen.width * 0.5f) , Mathf.Round(Screen.height * Config.STAGE_VISUAL_POSITION_IN_PERCENT), screenZ));
         stageVisual.transform.position = stageVisualPosition;
@@ -294,26 +292,26 @@ public class TestGameManager : MonoBehaviour {
         if (StaticDataManager.difficulty == 2)
             FakeWordsInjector.Inject(songData);
 
+        // PREPARE LANES
+        lanesTimes[0] = 0;
+        lanesTimes[1] = 0;
+        lanesTimes[2] = 0;
+
 		GameObject wordGameObject;
 		WordGameObjectCtrl wordCtrl;
         for(int i=0; i<songData.wordsList.Count; i++)
 		{
 			wordGameObject = Instantiate(wordGameObjectPrefab, gameObject.transform);
-			wordGameObject.name = "WordAt_"+songData.wordsList[i].time.ToString();
+            wordGameObject.name = songData.wordsList[i].text+"_"+songData.wordsList[i].time.ToString();
 			wordCtrl = wordGameObject.GetComponent<WordGameObjectCtrl>();
 			wordCtrl.orderIndex = i+1;// starts from 1
             wordCtrl.timeOnScreen = timeOnScreen;
 			wordCtrl.distanceToTravel = distanceOnScreen;
             wordCtrl.SetData(songData.wordsList[i], songData.mp3dealy);
-            // set hard difficulty
-            wordCtrl.xPositionIndex = (StaticDataManager.difficulty == 2) ? Mathf.FloorToInt(Random.Range(1, 3.99f)) : wordCtrl.wordData.index;
-            if(wordCtrl.hitTime - lastPlacedTimestamp < Config.MINIMUM_TIME_DIFFERENCE_IN_LANE && wordCtrl.xPositionIndex==lastPlacedIndex){
-                wordCtrl.xPositionIndex += 1;
-                if(wordCtrl.xPositionIndex>3)
-                    wordCtrl.xPositionIndex = 1;
-            }
-            lastPlacedIndex = wordCtrl.xPositionIndex;
-            lastPlacedTimestamp = wordCtrl.hitTime;
+            // DISTRIBUTE WORDS BY INDEX OR RANDOMLY
+            wordCtrl.xPositionIndex = (StaticDataManager.difficulty == 2) ? FindFreeLane(wordCtrl) : wordCtrl.wordData.index;
+            lanesTimes[wordCtrl.xPositionIndex] = wordCtrl.hitTime;
+
             //set start & end positions
             wordCtrl.startPosition = startPositionsInWorld[wordCtrl.xPositionIndex];
             wordCtrl.endPosition = endPositionsOnInWorld[wordCtrl.xPositionIndex];
@@ -323,6 +321,40 @@ public class TestGameManager : MonoBehaviour {
 			wordGameObject.SetActive(false);
 		}
 	}
+
+
+    int randomLane;
+    int freeLane;
+    private int FindFreeLane(WordGameObjectCtrl wordCtrl)
+    {
+        // get a random lane
+        randomLane = Mathf.FloorToInt(Random.Range(0, 2.99f));
+        freeLane = -1;
+        // if the time in the lane is to close then check other two lanes and break when you find a free lane
+        if(wordCtrl.hitTime - lanesTimes[randomLane]<songData.minimumTimeDifferenceInLane){
+            int nextLane = 0;
+            for (int i = 1; i < 3; i++){
+                nextLane = (randomLane + i) % 3;
+                if (wordCtrl.hitTime - lanesTimes[nextLane] >= songData.minimumTimeDifferenceInLane){
+                    freeLane = nextLane;
+                    return freeLane;
+                }
+            }
+            // if no lane is free find one with lowest time
+            if(freeLane==-1){
+                float _min = Mathf.Min(lanesTimes);
+                int minIndex = System.Array.IndexOf(lanesTimes, _min);
+                freeLane = minIndex;
+            }
+        }
+        else{
+            freeLane = randomLane;
+        }
+
+        return freeLane;
+
+    }
+
 	public void StopPlaying()
 	{
 		audioSource.Stop();
@@ -476,7 +508,7 @@ public class TestGameManager : MonoBehaviour {
     bool isPerfect;
     void RegisterWordHit(ClickAreaCtrl cArea, WordGameObjectCtrl wrd){
         if(wrd.isFake){
-            Debug.Log("FAKE HIT");
+            //Debug.Log("FAKE HIT");
             ScoreCtrl.FakeClick();
             UIEventManager.FakeWordHitEvent();
             return;

@@ -164,7 +164,7 @@ PlayerSettings:
     iOS: com.fanclub.KaraokeHeroTest
     tvOS: 
   buildNumber:
-    iOS: 1.0.17
+    iOS: 1.0.18
   AndroidBundleVersionCode: 1
   AndroidMinSdkVersion: 16
   AndroidTargetSdkVersion: 0
@@ -183,7 +183,7 @@ PlayerSettings:
     serializedVersion: 2
     m_Bits: 238
   iPhoneSdkVersion: 988
-  iOSTargetOSVersionString: 7.0
+  iOSTargetOSVersionString: 8.0
   tvOSSdkVersion: 0
   tvOSRequireExtendedGameController: 0
   tvOSTargetOSVersionString: 9.0

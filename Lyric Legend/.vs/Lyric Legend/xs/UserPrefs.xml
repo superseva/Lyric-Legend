@@ -1,10 +1,8 @@
 ﻿<Properties StartupConfiguration="{EFDAEDE3-2421-1567-2B61-14A25BC6F7B0}|">
-  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Utils/GameLogger.cs">
+  <MonoDevelop.Ide.Workbench ActiveDocument="Assets/Scripts/Test/TestGameManager.cs">
     <Files>
-      <File FileName="Assets/Scripts/Test/TestGameManager.cs" Line="492" Column="75" />
-      <File FileName="Assets/Scripts/VO/WordData.cs" Line="4" Column="1" />
-      <File FileName="Assets/Scripts/VO/SongData.cs" Line="1" Column="1" />
-      <File FileName="Assets/Scripts/Utils/GameLogger.cs" Line="40" Column="73" />
+      <File FileName="Assets/Scripts/Test/TestGameManager.cs" Line="17" Column="20" />
+      <File FileName="Assets/Scripts/ObjectPool/PoolManager.cs" Line="6" Column="14" />
     </Files>
   </MonoDevelop.Ide.Workbench>
   <MonoDevelop.Ide.Workspace ActiveConfiguration="Debug" />

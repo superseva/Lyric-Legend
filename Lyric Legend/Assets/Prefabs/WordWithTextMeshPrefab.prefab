@@ -228,9 +228,10 @@ MonoBehaviour:
     time: 
     duration: 0
     index: 0
+    isFake: 0
   showTime: 0
   hitTime: 0
-  existanceTime: 1
+  timeOnScreen: 1
   startPosition: {x: 0, y: 0, z: 0}
   endPosition: {x: 0, y: 0, z: 0}
   holdDuration: 0
@@ -238,6 +239,8 @@ MonoBehaviour:
   holdGraphicTweening: 0
   orderIndex: 0
   isClicked: 0
+  xPositionIndex: 0
+  isFake: 0
 --- !u!114 &114868361703545200
 MonoBehaviour:
   m_ObjectHideFlags: 1
